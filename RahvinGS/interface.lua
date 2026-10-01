@@ -410,6 +410,14 @@ state.JobMode2 = M { ['description'] = 'Job Specific Mode' }
 state.JobMode2:options('OFF', 'ON')
 state.JobMode2:set('OFF')
 
+-- The auto weaponskill. OFF, then one option per AutoWS_List entry for the current weapon
+-- mode, labeled with the weaponskill and its TP. The engine builds the list itself and
+-- rebuilds it, back to OFF, whenever the weapon mode changes, so a job file never calls
+-- :options() on it. Change it with gs c autows.
+state.AutoWS = M { ['description'] = 'Auto Weaponskill' }
+state.AutoWS:options('OFF')
+state.AutoWS:set('OFF')
+
 -- The ranged ammunition type. The engine reads it only to find the standard round a
 -- weaponskill may finish on once its own has run out. A job file carrying more than one
 -- ranged type reads it to fill the flat Ammo keys below.
@@ -460,6 +468,18 @@ is_Busy = false
 AutoItem = false
 Random_Lockstyle = false
 Lockstyle_List = {}
+
+-- The auto weaponskill choices, keyed by weapon mode. Each entry is { weaponskill, TP }, and
+-- each becomes a state.AutoWS option while that weapon mode is current. While engaged with
+-- an option chosen, the weaponskill is used on your target as soon as TP reaches the number.
+-- 'AM2' or 'AM3' in place of a number builds that Aftermath level at 2000 or 3000 TP, then
+-- uses the weaponskill at 1000 while it, or a higher level, lasts. A weapon mode with no
+-- entry offers OFF alone.
+--   AutoWS_List = {
+--       Naegling = { { 'Savage Blade', 1000 }, { 'Savage Blade', 1750 } },
+--       Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
+--   }
+AutoWS_List = {}
 
 -- Layer the weapon set named by the current JobMode value onto a set the caller is building,
 -- and return the result. A helper for job files: nothing in the engine calls it, and some

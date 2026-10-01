@@ -274,6 +274,12 @@ return function(E)
         if UI_Name2 ~= '' then
             fields[#fields + 1] = { label = status_label(UI_Short2, UI_Name2), mode = 'JobMode2' }
         end
+        -- The auto weaponskill, once the job file lists any. Its options are brought up to
+        -- date first, so the column is measured over the current weapon's choices.
+        if type(AutoWS_List) == 'table' and next(AutoWS_List) ~= nil then
+            autows_sync()
+            fields[#fields + 1] = { label = 'AWS', mode = 'AutoWS' }
+        end
 
         -- Measured in columns, not bytes. A job file's own UI_Short is used as given, and a
         -- label carrying a multi-byte glyph occupies fewer columns than bytes.

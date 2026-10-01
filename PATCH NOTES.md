@@ -42,6 +42,19 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
 
 ---
 
+## Unreleased
+
+### New and Changed Features
+
+- **AutoWS.** A new mode, `gs c AutoWS`, uses a weaponskill for you once your TP reaches a
+  threshold. List the choices per weapon mode in your job file as `AutoWS_List`, each one
+  a weaponskill and a TP value: `Naegling = { { 'Savage Blade', 1000 } }`. `AM2` or `AM3`
+  in place of the TP builds that Aftermath level first. The mode offers `OFF` plus the
+  current weapon's choices, goes back to `OFF` when the weapon mode changes, and shows on
+  the status box as `AWS`. It has no default key. See [AutoWS](README.md#autows).
+
+---
+
 ## 2.1
 
 2.1 puts on gear for a buff with no code in your job file, chooses day, weather and distance

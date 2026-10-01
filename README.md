@@ -630,6 +630,25 @@ Keeps Hoxne Ampulla in your ammo slot, and uses the item for you whenever its en
 
 Full behavior, including what each on state does with the range slot, is under [The Hoxne Ampulla hold](#the-hoxne-ampulla-hold).
 
+### AutoWS
+
+Uses a weaponskill for you once your TP reaches a threshold you choose. Each option names a weaponskill and a TP value, and the options come from the current weapon mode.
+
+- **Options:** `OFF`, then one per `AutoWS_List` entry for the current weapon mode, labeled with the weaponskill and its TP, such as `Savage Blade 1000`
+- **Set them in your job file:**
+  ```lua
+  AutoWS_List = {
+      Naegling = { { 'Savage Blade', 1000 }, { 'Savage Blade', 1750 } },
+      Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
+  }
+  ```
+- **Command:** `//gs c AutoWS`, or `//gs c AutoWS "Savage Blade 1750"` · **Default key:** none. Bind one yourself with Windower, for example `//bind !f9 gs c AutoWS`
+- The keys are your `WeaponMode` options. A weapon mode with no entry offers `OFF` alone, and changing the weapon mode sets AutoWS back to `OFF`.
+- `AM2` or `AM3` in place of a number builds that Aftermath level at 2000 or 3000 TP, then uses the weaponskill at 1000 while that level, or a higher one, is up.
+- It acts only while you are engaged, on your battle target (`<t>`). It waits while another action is in progress, and while you are under Amnesia, Sleep, Stun, Petrification, Terror or Charm. It checks on every TP change, and after it sends a weaponskill it waits two seconds before sending another.
+- The weaponskill goes through the ordinary precast, so its gear and its checks are the same as for one you type.
+- The status box shows it as `AWS` once your job file lists any entries.
+
 ### JobMode and JobMode2
 
 Two free-form modes for anything a job needs. The engine tracks the value and shows it; what it *means* is up to your job file. Left alone, both offer `OFF` and `ON`.
@@ -719,6 +738,7 @@ A partial value is offered as a suggestion but never accepted, so `//gs c Treasu
 | `gs c TreasureHunter [mode]` | Cycle, or jump to a TH mode |
 | `gs c SpellReceived [ON\|OFF]` | Cycle, or set spell-received tracking |
 | `gs c Hoxne [OFF\|ON-Allow Critical\|ON-Locked]` | Cycle, or set the Hoxne Ampulla hold |
+| `gs c AutoWS [mode]` | Cycle, or jump to an auto weaponskill choice for the current weapon |
 | `gs c JobMode [mode]` | Cycle, or jump to a job-specific mode |
 | `gs c JobMode2 [mode]` | Cycle, or jump to a second job-specific mode |
 
@@ -1136,6 +1156,7 @@ Apply them by calling `jobsetup(LockStylePallet, MacroBook, MacroSet)` once, out
 | Variable | Type | Default | Description |
 |---|---|---|---|
 | `AutoItem` | boolean | `false` | Use a Remedy and a Holy Water automatically for status ailments |
+| `AutoWS_List` | table | `{}` | Auto weaponskill choices per weapon mode, each `{ weaponskill, TP }`, where TP is a number, `'AM2'` or `'AM3'` — see [AutoWS](#autows) |
 | `Food` | string | — | Item used by `//gs c food` — `"Sublime Sushi"` |
 | `Ammo_Warning_Limit` | number | `99` | Warn on precast when your ranged ammunition falls to this count or below |
 | `UI_Name` | string | `''` | Name used for JobMode in chat and on the box; empty hides the mode |

@@ -365,6 +365,7 @@ return function(E)
     local command_takes_arg = {
         ["abysseaproc"] = true,
         ["aptitude"] = true,
+        ["autows"] = true,
         ["capacity"] = true,
         ["debug"] = true,
         ["display"] = true,
@@ -652,6 +653,21 @@ return function(E)
             return true
         end
         equip_set_command()
+        return true
+    end
+
+    -- The auto weaponskill. No default key. The same shape as the mode command above, but
+    -- the options come from AutoWS_List for the current weapon mode, so they are brought up
+    -- to date first. Choosing an option changes no gear, so nothing is rebuilt.
+    command_handlers["autows"] = function(cmd, command)
+        if autows_sync() then invalidate_layout() end
+        if command == "autows" then
+            state.AutoWS:cycle()
+        elseif not set_mode_arg(state.AutoWS, 'Auto WS', 'AutoWS', command_arg(cmd)) then
+            return true
+        end
+        notice('Auto WS: [' .. state.AutoWS.value .. ']')
+        display_box_update()
         return true
     end
 
@@ -1163,6 +1179,12 @@ return function(E)
         end
         notice('Weapon Mode: [' .. state.WeaponMode.value .. ']')
         bridge_weapon_lock(before)
+        -- A new weapon offers its own AutoWS options, and the mode goes back to OFF.
+        local autows_was = state.AutoWS.value
+        if autows_sync() then
+            invalidate_layout()
+            if autows_was ~= 'OFF' then notice('Auto WS: [OFF]') end
+        end
         display_box_update()
         if self_command_custom then self_command_custom(command) end
         two_hand_check()
@@ -1328,6 +1350,7 @@ return function(E)
         { word = 'jobmode2',       group = 'modes',       args = '[<mode>]',                 purpose = "cycle the job file's second mode, or set it by name" },
         { word = 'hoxne',          group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the Hoxne Ampulla mode, or set it by name' },
         { word = 'spellreceived',  group = 'modes',       args = '[<mode>]',                 purpose = 'cycle spell-received gear tracking, or set it by name' },
+        { word = 'autows',         group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the auto weaponskill for the current weapon, or set it by name' },
         { word = 'display',        group = 'display',     args = '[on|off]',                 purpose = 'show or hide the status box' },
         { word = 'displaymode',    group = 'display',     args = '[on|off]',                 purpose = 'switch the mode box between one line and several' },
         { word = 'displaystyle',   group = 'display',     args = '[<style>]',                purpose = 'cycle the renderer that draws the box, or choose one by name' },

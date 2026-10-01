@@ -127,6 +127,11 @@ do
     -- drops a Corsair roll from the eleven tracker.
     windower.register_event('lose buff', E.sr_lose_buff)
 
+    -- TP changed: the auto weaponskill uses the chosen weaponskill once TP reaches its
+    -- threshold. Registered wrapped, so player and buffactive are refreshed before it reads
+    -- them. It equips nothing itself, since the /ws it sends runs the ordinary precast.
+    windower.register_event('tp change', E.autows_tp_change)
+
     -- Logout: both display boxes come down, with whatever the renderer standing owns. The
     -- boxes are not rebuilt until after the next login, so without this they stay drawn over
     -- the character list. The handler also latches the display shut, which stops the

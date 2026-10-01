@@ -20,9 +20,11 @@
 -- CONTENTS
 --   Section 19 - Automation and combat monitoring. The main polling engine and the
 --   movement detection inside it, the two weapon-trait checks, skillchain burst tracking,
---   buff cancellation, and the Escha temporary-item macro.
+--   buff cancellation, the auto weaponskill, and the Escha temporary-item macro.
 --
--- EXPORTS  Nothing onto E. Its functions are globals. It writes these fields the state
+-- EXPORTS  autows_tp_change onto E, which the root registers on the tp change event. Its
+--          other functions are globals, autows_sync among them, which commands.lua and
+--          display.lua call. It writes these fields the state
 --          component declares: is_moving, DualWield and TwoHand, the three
 --          last_skillchain_* fields, and SpellCastTime, which it zeroes when a busy window
 --          expires.
@@ -202,6 +204,83 @@ return function(E)
         E.TwoHand = name_is_two_handed(weapon_name)
     end
 
+    -- Auto weaponskill ----------------------------------------------------------------------------
+
+    -- The weapon mode and the AutoWS_List table the AutoWS options were last built from, and
+    -- the entry each option label stands for. Both are compared by value and identity, so a
+    -- weapon change or a job file replacing AutoWS_List rebuilds the options on the next sync.
+    local autows_weapon, autows_list_built
+    local autows_choices                      = {}
+    -- os.clock() time before which no other weaponskill is sent, so two TP changes in quick
+    -- succession cannot queue a second /ws behind the first.
+    local autows_next                         = 0
+
+    -- Rebuild state.AutoWS from AutoWS_List[<the current weapon mode>]: OFF, then one option
+    -- per entry, labeled with the weaponskill and its TP, as 'Savage Blade 1000'. An entry
+    -- missing either is left out. Rebuilding sets the mode back to OFF. Returns true when it
+    -- rebuilt, so a caller drawing the box knows the option widths changed.
+    function autows_sync()
+        local list = type(AutoWS_List) == 'table' and AutoWS_List or nil
+        if autows_weapon == state.WeaponMode.value and autows_list_built == list then
+            return false
+        end
+        autows_weapon = state.WeaponMode.value
+        autows_list_built = list
+        autows_choices = {}
+        local labels = { 'OFF' }
+        for _, choice in ipairs(list and list[autows_weapon] or {}) do
+            if type(choice) == 'table' and choice[1] and choice[2] then
+                local label = tostring(choice[1]) .. ' ' .. tostring(choice[2])
+                if not autows_choices[label] then
+                    labels[#labels + 1] = label
+                    autows_choices[label] = choice
+                end
+            end
+        end
+        state.AutoWS:options(unpack(labels))
+        state.AutoWS:set('OFF')
+        return true
+    end
+
+    -- The TP an option fires at. A number is used as given. 'AM2' or 'AM3' builds that
+    -- Aftermath level at 2000 or 3000 TP, then fires at 1000 while it, or a higher level,
+    -- lasts. Anything else never fires.
+    local function autows_threshold(tp)
+        local level = tonumber(tostring(tp):upper():match('^AM([23])$'))
+        if not level then return tonumber(tp) end
+        for held = level, 3 do
+            if buffactive['Aftermath: Lv.' .. held] then return 1000 end
+        end
+        return level * 1000
+    end
+
+    -- Send the chosen weaponskill at the battle target once TP reaches the option's
+    -- threshold. The root registers it, wrapped, on the tp change event, so player and
+    -- buffactive are current. A TP change that arrives while the weaponskill cannot be used
+    -- sends nothing, and the next one tries again. The weaponskill then runs the ordinary
+    -- precast, so its gear and every check there apply as they do to a typed /ws.
+    E.autows_tp_change = function(new_tp)
+        if state.AutoWS.value == 'OFF' then return end
+        autows_sync()
+        local choice = autows_choices[state.AutoWS.value]
+        if not choice then return end
+        local now = os.clock()
+        if now < autows_next or is_Busy or midaction() then return end
+        if not player or player.status ~= 'Engaged' then return end
+        local active_buffs = buffactive
+        if active_buffs['Amnesia'] or active_buffs['Sleep'] or active_buffs['Stun']
+            or active_buffs['Petrification'] or active_buffs['Terror'] or active_buffs['Charm'] then
+            return
+        end
+        local threshold = autows_threshold(choice[2])
+        local tp = new_tp or player.tp
+        if not threshold or not tp or tp < threshold then return end
+        local target = windower.ffxi.get_mob_by_target('t')
+        if not target or target.hpp == 0 then return end
+        autows_next = now + 2
+        windower.send_command('input /ws "' .. tostring(choice[1]) .. '" <t>')
+    end
+
     -- The main polling engine. The root registers it on the raw outgoing chunk event, and
     -- that has two consequences. It runs only when the client sends a packet, so it is not
     -- a reliable timer, and anything that must run on schedule belongs on prerender. And
@@ -296,6 +375,13 @@ return function(E)
             dual_wield_check()
             cleanup_tagged_mobs()
             UpdateTime1 = now
+        end
+
+        -- A weapon mode a job file set from its own code, or an AutoWS_List it replaced,
+        -- rebuilds the AutoWS options here, and the box is redrawn for their new widths.
+        if autows_sync() then
+            invalidate_layout()
+            display_box_update()
         end
 
         -- The job file's own periodic hook, every 2 seconds, and only when the job file
