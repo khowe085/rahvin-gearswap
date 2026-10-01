@@ -511,8 +511,8 @@ Ten keys are bound when your job file loads, and released when it unloads. These
 The engine lists the keys in chat as your job file loads, and `//gs c keybind` lists them again:
 
 ```
-Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [Alt+F11] TH Mode  [Alt+F9] Auto WS  [F11] Auto Buff
-Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)
+Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [Alt+F11] TH Mode  [Alt+F9] Auto WS
+Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)  [F11] Auto Buff
 ```
 
 In that list OffenseMode is called *Stance*, the name the status box shortens to `STN`. When your file names its job modes with `UI_Name` or `UI_Name2`, their keys lead the second line, under the names you gave them.
@@ -529,10 +529,10 @@ Each key sends a command you can also type or put in a macro — <kbd>F12</kbd> 
 //gs c keybind jobmode ~f12            -- Shift+F12
 //gs c keybind hoxne none              -- no key; //gs c hoxne still cycles it
 //gs c keybind hoxne default           -- back to its default key
-//gs c keybind default                 -- all nine back to their defaults
+//gs c keybind default                 -- all ten back to their defaults
 ```
 
-The mode words are `offensemode`, `weaponmode`, `weaponlock`, `treasurehunter`, `jobmode`, `jobmode2`, `hoxne`, `spellreceived` and `autows`. In the short spelling, `^` means Ctrl, `!` Alt and `~` Shift.
+The mode words are `offensemode`, `weaponmode`, `weaponlock`, `treasurehunter`, `jobmode`, `jobmode2`, `hoxne`, `spellreceived`, `autows` and `autobuff`. In the short spelling, `^` means Ctrl, `!` Alt and `~` Shift.
 
 - **Each change is saved** in the character's own settings file, and confirmed: `TH Mode bound to [Ctrl+F5]; any other Windower bind on this key is replaced.`
 - **A key another mode already uses is refused**, and the answer names that mode: `[F12] is bound to Stance; free it first (gs c keybind offensemode none) or choose another key.`

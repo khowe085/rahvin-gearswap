@@ -190,7 +190,8 @@ return function(E)
         -- Last in the table, so on a clash an engine mode above keeps its key. Listed on line 1
         -- beside the weapon mode, whose key it shares under Alt.
         { word = 'autows',         label = 'Auto WS',                   line = 1, default = '!f9',  command = 'gs c AutoWS' },
-        { word = 'autobuff',       label = 'Auto Buff',                 line = 1, default = 'f11',  command = 'gs c AutoBuff' },
+        -- On line 2, because line 1 would pass the 100 characters the game prints unwrapped.
+        { word = 'autobuff',       label = 'Auto Buff',                 line = 2, default = 'f11',  command = 'gs c AutoBuff' },
     }
 
     -- The job file's name for a job-mode row, which is empty when the file left the mode
