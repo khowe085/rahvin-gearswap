@@ -410,9 +410,10 @@ return function(E)
         -- stays on.
         if pet.isvalid and pet_midaction() then return end
         -- Idle is the floor under every branch, so a build that matches no branch still
-        -- dresses the character.
+        -- dresses the character. gs c test leaves it out, so a test shows only the gear the
+        -- action itself chose.
         local built_set = {}
-        if sets.Idle then merge_report(built_set, sets.Idle) end
+        if sets.Idle and not E.test_no_idle_floor then merge_report(built_set, sets.Idle) end
         merge_report_mark()
         if spell.type == 'WeaponSkill' then
             if sets.WS then
@@ -757,8 +758,9 @@ return function(E)
 
         local built_set = {}
         -- Idle, then sets.Midcast, form the floor, so a cast that matches no branch below
-        -- still comes out dressed rather than in its precast gear.
-        if sets.Idle then merge_report(built_set, sets.Idle) end
+        -- still comes out dressed rather than in its precast gear. gs c test leaves Idle out,
+        -- as precastequip does.
+        if sets.Idle and not E.test_no_idle_floor then merge_report(built_set, sets.Idle) end
         if sets.Midcast then
             merge_report(built_set, sets.Midcast)
             -- Spell interruption rate down, for every action except a ranged attack.

@@ -40,7 +40,7 @@
 --     Sent by the engine .... update auto, enchrepair, hoxnerelock and hoxnerelease. A raw
 --                             event handler cannot equip, so it sends one of these, and the
 --                             equip lands inside the wrapped command. gs c test sends
---                             testpass, so its midcast gets an equip pass of its own.
+--                             testpass, so its precast and midcast each get an equip pass.
 -- The key bindings send mixed case, such as 'gs c OffenseMode'. They resolve because the
 -- dispatcher lowercases a command before it looks anything up.
 --
@@ -94,6 +94,7 @@ return function(E)
     local display_logged_out = E.display_logged_out
     local TYPE_WS, merge_into, merge_report_flush = E.TYPE_WS, E.merge_into, E.merge_report_flush
     local keep_weaponskill_weapons, yield_range_to_ammo = E.keep_weaponskill_weapons, E.yield_range_to_ammo
+    local merge_report_layers = E.merge_report_layers
 
     ------------------------------------------------------------------------------------------------
     -- SECTION 21 - SELF COMMANDS
@@ -1436,7 +1437,7 @@ return function(E)
         { word = 'profile',        group = 'utility',     args = '<name>',                   purpose = 'run a Windower script chosen by the current job pairing' },
         { word = 'shutdown',       group = 'utility',     args = '',                         purpose = 'close this game client' },
         { word = 'test',           group = 'utility',     args = 'set <set> | [precast|midcast] <action>', purpose = 'wear a set or an action\'s gear, held 30s' },
-        { word = 'testpass',       group = 'internal',    args = '<n>',                      purpose = "run a gs c test action's midcast pass" },
+        { word = 'testpass',       group = 'internal',    args = '<n>',                      purpose = "run a gs c test action's precast or midcast pass" },
         { word = 'checksets',      group = 'diagnostics', args = '',                         purpose = 'sort every declared set into carries gear, empty, and undeclared placeholder' },
         { word = 'gearreporting',  group = 'diagnostics', args = '[on|off]',                 purpose = 'switch the set-selection trace channel on or off' },
         { word = 'enchinfo',       group = 'diagnostics', args = '<item>',                   purpose = 'dump the live extdata for one enchanted item' },
@@ -1689,24 +1690,57 @@ return function(E)
     end
 
     -- One phase's build, as the precast and midcast hooks make it, without the window, busy
-    -- and multibox handling around them.
+    -- and multibox handling around them, and without the Idle floor, so the test shows only
+    -- the gear the action chose. Returns the build and the names of what dressed it: every
+    -- set the build merged that carried gear, then the job file's hook and the engine's
+    -- implement when either added any.
     local function test_build(phase, spell)
-        local built_set
+        local built_set, custom
+        E.test_no_idle_floor = true
+        local ok, err = pcall(function()
+            if phase == 'precast' then
+                built_set = precastequip(spell) or {}
+            else
+                built_set = midcastequip(spell) or {}
+            end
+        end)
+        E.test_no_idle_floor = false
+        if not ok then error(err, 0) end
+        local names = merge_report_layers()
+        merge_report_flush(phase, spell)
         if phase == 'precast' then
-            built_set = precastequip(spell) or {}
-            merge_report_flush('precast', spell)
-            merge_into(built_set, test_custom('precast', precast_custom, spell))
+            custom = test_custom('precast', precast_custom, spell)
         else
-            built_set = midcastequip(spell) or {}
-            merge_report_flush('midcast', spell)
-            merge_into(built_set, test_custom('midcast', midcast_custom, spell))
+            custom = test_custom('midcast', midcast_custom, spell)
         end
+        if type(custom) == 'table' and next(custom) then names[#names + 1] = phase .. '_custom' end
+        merge_into(built_set, custom)
         local equipment_spell_set, refused = check_equipment_spells(spell)
         if phase == 'precast' then report_refused(spell.english, refused, notice) end
-        if equipment_spell_set then merge_into(built_set, equipment_spell_set) end
+        if equipment_spell_set then
+            merge_into(built_set, equipment_spell_set)
+            names[#names + 1] = 'the engine\'s implement'
+        end
         if spell.type == TYPE_WS then keep_weaponskill_weapons(built_set, spell) end
         if phase == 'precast' and spell.action_type == 'Magic' then yield_range_to_ammo(built_set) end
-        return built_set
+        return built_set, names
+    end
+
+    -- The chat line for one pass: the action, the phase and what it put on.
+    local function test_say(spell, phase, names)
+        notice(('Test: [%s] %s: %s'):format(spell.english, phase,
+            #names > 0 and table.concat(names, ' + ')
+            or phase == 'precast' and 'no set carried gear; the slots stay bare'
+            or 'no set carried gear; the precast gear stays'))
+    end
+
+    -- Queue the next pass of the action under test. Each pass is its own command, so it is
+    -- its own equip pass, under a token a newer test makes stale.
+    local function test_next(pending, phase)
+        test_token = test_token + 1
+        pending.token, pending.phase = test_token, phase
+        test_pending = pending
+        windower.send_command('gs c testpass ' .. test_token)
     end
 
     -- Switch the job file back on, if a test switched it off. The timer it set lapses.
@@ -1753,6 +1787,7 @@ return function(E)
             local naked = {}
             for _, slot in ipairs(TEST_ALL) do naked[slot] = empty end
             equip(naked, set)
+            notice('Test: naked, then ' .. path)
             test_hold()
             return true
         end
@@ -1775,21 +1810,14 @@ return function(E)
 
         test_release()
         test_pending = nil
-        -- The weapons stay, as they would for a real action: held by the lock, or swapped by
-        -- the sets. Every other slot starts bare, so a slot no set fills shows through.
-        local built_set = {}
-        for _, slot in ipairs(TEST_STRIP) do built_set[slot] = empty end
-        merge_into(built_set, test_build('precast', spell))
-        equip(built_set)
-        if stage == 'precast' then
-            test_hold()
-        else
-            -- Midcast is a separate equip pass, as for a real use, so it runs in the next
-            -- command, under a token a newer test makes stale.
-            test_token = test_token + 1
-            test_pending = { token = test_token, spell = spell }
-            windower.send_command('gs c testpass ' .. test_token)
-        end
+        -- The first pass strips every slot but the weapons, which stay as they would for a
+        -- real action: held by the lock, or swapped by the sets. Precast and midcast follow,
+        -- each in a pass of its own.
+        local naked = {}
+        for _, slot in ipairs(TEST_STRIP) do naked[slot] = empty end
+        equip(naked)
+        notice('Test: [' .. spell.english .. '] naked but main, sub and range')
+        test_next({ spell = spell, stage = stage }, 'precast')
         return true
     end
 
@@ -1797,8 +1825,27 @@ return function(E)
         local pending = test_pending
         test_pending = nil
         if not pending or tonumber(command_arg(command)) ~= pending.token then return true end
-        equip(test_build('midcast', pending.spell))
-        test_hold()
+        local spell = pending.spell
+        if pending.phase == 'precast' then
+            -- The bare slots go out again under the precast build, so a slot it leaves out
+            -- stays bare even while the strip is still in flight.
+            local built_set = {}
+            for _, slot in ipairs(TEST_STRIP) do built_set[slot] = empty end
+            local precast_set, names = test_build('precast', spell)
+            merge_into(built_set, precast_set)
+            equip(built_set)
+            test_say(spell, 'precast', names)
+            if pending.stage == 'precast' then
+                test_hold()
+            else
+                test_next(pending, 'midcast')
+            end
+        else
+            local midcast_set, names = test_build('midcast', spell)
+            equip(midcast_set)
+            test_say(spell, 'midcast', names)
+            test_hold()
+        end
         return true
     end
 

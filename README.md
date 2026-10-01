@@ -919,7 +919,15 @@ Because it collects every set, a job file that names more items than inventory h
 ```
 
 - **`gs c test set <set>`** strips all sixteen slots and wears the set, so a slot the set leaves out shows up empty. The path is read as `//gs equip` reads one, with or without the leading `sets.`.
-- **`gs c test [precast|midcast] <action>`** strips every slot but main, sub and range, then runs the engine's and your job file's precast for the named spell, ability or weaponskill, and then its midcast, each in its own swap, as for a real use. `precast` stops before midcast; `midcast`, or no word at all, runs both. The info line names the set each step used, as for a real action. The action is aimed at your target, or at you with none, and nothing is used: no can't-act checks, busy window, Hoxne window or multibox announce apply, and the holds and the weapon lock keep their slots as they always do.
+- **`gs c test [precast|midcast] <action>`** first strips every slot but main, sub and range in a swap of its own. It then runs the engine's and your job file's precast for the named spell, ability or weaponskill, and then its midcast, each in its own swap, as for a real use. `precast` stops before midcast; `midcast`, or no word at all, runs both. Your Idle set, which a real action wears under every slot its own sets leave out, is left out of a test, so a slot the action's sets do not fill stays bare. The action is aimed at your target, or at you with none, and nothing is used: no can't-act checks, busy window, Hoxne window or multibox announce apply, and the holds and the weapon lock keep their slots as they always do.
+- **Each step says what it put on**, whatever your `info` setting, naming every set that carried gear, then your hook and the engine's implement when they added any:
+
+  ```
+  Test: [Haste II] naked but main, sub and range
+  Test: [Haste II] precast: sets.Precast.FastCast + precast_custom
+  Test: [Haste II] midcast: sets.Midcast + sets.Midcast.SIRD + sets.Midcast.Haste
+  Test: job file off for 30 seconds while the test gear is on.
+  ```
 - **Your job file can tell a test apart.** The spell your `precast_custom` and `midcast_custom` receive carries `spell.test = true`, so a check meant only for a real use can skip it.
 - **During the 30 seconds**, another `gs c test` runs straight away and starts the 30 seconds over. A bare `//gs enable` or `//gs disable` takes over from the timer and leaves the file the way you set it. Nothing else you type with `gs c` is answered until the hold ends.
 
@@ -1035,7 +1043,7 @@ The highest value wins: a Mecisto. Mantle whose augment is worth more than eithe
 | `gs c enchrepair` | Sent by the enchanted item engine when an item it is using is knocked out of its slot |
 | `gs c hoxnerelock` | Sent by the Hoxne Ampulla's background check, re-asserting its hold on range and ammo |
 | `gs c hoxnerelease` | Sent by the Hoxne Ampulla's background check, freeing a stranded Ampulla after a reload |
-| `gs c testpass <n>` | Sent by `gs c test` to run the action's midcast in a swap of its own |
+| `gs c testpass <n>` | Sent by `gs c test` to run the action's precast, then its midcast, each in a swap of its own |
 
 ---
 

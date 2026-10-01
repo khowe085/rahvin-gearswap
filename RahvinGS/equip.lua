@@ -883,6 +883,25 @@ return function(E)
         return n and ('[' .. tostring(n) .. '] ') or ''
     end
 
+    -- The name of every layer in the current record that carried gear, in merge order and
+    -- once each, for gs c test to say what it put on. It reads the record, so it is called
+    -- before merge_report_flush, which empties it. A layer the record cannot name is listed
+    -- as an unnamed set.
+    local function merge_report_layers()
+        local names, seen = {}, {}
+        for i = 1, E.mr_count do
+            local t = mr_history[i]
+            if set_has_gear(t) then
+                local n = mr_name(i, t) or 'an unnamed set'
+                if not seen[n] then
+                    seen[n] = true
+                    names[#names + 1] = n
+                end
+            end
+        end
+        return names
+    end
+
     -- Report the finished build. The precast, midcast and aftercast hooks, and pet_midcast,
     -- call this after their build. The warning and the info line speak only for the phase
     -- that chose the action's final gear, and the gear report speaks for every phase.
@@ -2410,6 +2429,7 @@ return function(E)
     E.merge_report = merge_report
     E.merge_named = merge_named
     E.merge_report_flush = merge_report_flush
+    E.merge_report_layers = merge_report_layers
     E.apply_buff_children = apply_buff_children
     E.set_roll_eleven = set_roll_eleven
     E.discover_buff_children = discover_buff_children
