@@ -294,6 +294,78 @@ return function(E)
         end
     end
 
+    -- The auto weaponskill buff. Before a weaponskill, the first of these that is ready is used
+    -- in its place, and the weaponskill is sent again once the buff is up. One per
+    -- weaponskill, in this order. Berserk and Defender cancel each other, so Berserk waits
+    -- while Defender is up. recast is the ability's recast id.
+    local ws_buffs = {
+        { name = 'Last Resort', job = 'DRK', level = 15, recast = 87 },
+        { name = 'Berserk',     job = 'WAR', level = 15, recast = 1, unless = 'Defender' },
+        { name = 'Warcry',      job = 'WAR', level = 35, recast = 2 },
+        { name = 'Aggressor',   job = 'WAR', level = 45, recast = 4 },
+    }
+
+    -- Whether the main job, or a subjob not under level restriction, reaches the level.
+    local function has_job_ability(job, level)
+        if player.main_job == job and (player.main_job_level or 0) >= level then return true end
+        return player.sub_job == job and (player.sub_job_level or 0) >= level
+            and not buffactive['SJ Restriction']
+    end
+
+    -- The first buff in ws_buffs the player has, is not already under, and can use now.
+    local function ready_ws_buff()
+        local recasts = get_ability_recasts()
+        for _, ability in ipairs(ws_buffs) do
+            if has_job_ability(ability.job, ability.level)
+                and not buffactive[ability.name]
+                and not (ability.unless and buffactive[ability.unless])
+                and recasts[ability.recast] == 0 then
+                return ability.name
+            end
+        end
+    end
+
+    -- The weaponskill being sent again. Set as that send goes out, so only it, and not a
+    -- press spammed before it, is let through untouched.
+    local ws_buff_refire
+    -- os.clock() time until which other presses of a weaponskill are dropped while its buff
+    -- and its second send are pending, so spam cannot stack more of them onto the queue.
+    local ws_buff_lock = 0
+
+    -- Uses a ready buff in the weaponskill's place and sends the weaponskill again 1.1
+    -- seconds later. Returns true when it canceled the weaponskill. A weaponskill the busy
+    -- gate would refuse is left to it, so the buff is never used for a weaponskill that
+    -- cannot follow.
+    local function buff_before_ws(spell)
+        -- A lapsed lock means the second send never made it back here, and its token must not
+        -- wave a much later press through.
+        local now = os.clock()
+        if now >= ws_buff_lock then ws_buff_refire = nil end
+        if ws_buff_refire == spell.english then
+            ws_buff_refire = nil
+            return false
+        end
+        if now < ws_buff_lock then
+            cancel_spell()
+            return true
+        end
+        if state.AutoWSBuff.value ~= 'ON' or is_Busy or player.tp < 1000 then return false end
+
+        local ability = ready_ws_buff()
+        if not ability then return false end
+
+        cancel_spell()
+        ws_buff_lock = now + 5
+        log('Auto WS Buff: [', ability, '] before [', spell.english, ']')
+        windower.send_command('input /ja "' .. ability .. '" <me>')
+        local ws_name, target = spell.english, spell.target.raw or '<t>'
+        coroutine.schedule(function()
+            ws_buff_refire = ws_name
+            windower.send_command('input /ws "' .. ws_name .. '" ' .. target)
+        end, 1.1)
+        return true
+    end
+
     -- Runs after GearSwap composes the packet and before it is sent, the last moment gear
     -- can still reach the action. It arms the busy window and wears the precast set: fast
     -- cast for a spell, and the action's own set for an ability or a weaponskill.
@@ -317,6 +389,9 @@ return function(E)
             E.SpellCastTime = 0
             release_implement()
         end
+        -- The auto weaponskill buff, after the stale window has expired and before the busy
+        -- gate arms the window, so the buff it sends is not itself refused as busy.
+        if spell.type == TYPE_WS and buff_before_ws(spell) then return end
         if not is_Busy then
             -- Size the busy window from the action. A spell's window is 20% of its listed
             -- cast time, which assumes 80% fast cast, plus a 2.5 second margin. Anything

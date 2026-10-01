@@ -373,6 +373,7 @@ return function(E)
         ["abysseaproc"] = true,
         ["aptitude"] = true,
         ["autows"] = true,
+        ["autowsbuff"] = true,
         ["capacity"] = true,
         ["debug"] = true,
         ["display"] = true,
@@ -675,6 +676,18 @@ return function(E)
         end
         notice('Auto WS: [' .. state.AutoWS.value .. ']')
         display_box_update()
+        return true
+    end
+
+    -- The auto weaponskill buff. No default key. The same shape as the mode command above.
+    -- It changes no gear, so nothing is rebuilt.
+    command_handlers["autowsbuff"] = function(cmd, command)
+        if command == "autowsbuff" then
+            state.AutoWSBuff:cycle()
+        elseif not set_mode_arg(state.AutoWSBuff, 'Auto WS Buff', 'AutoWSBuff', command_arg(cmd)) then
+            return true
+        end
+        notice('Auto WS Buff: [' .. state.AutoWSBuff.value .. ']')
         return true
     end
 
@@ -1358,6 +1371,7 @@ return function(E)
         { word = 'hoxne',          group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the Hoxne Ampulla mode, or set it by name' },
         { word = 'spellreceived',  group = 'modes',       args = '[<mode>]',                 purpose = 'cycle spell-received gear tracking, or set it by name' },
         { word = 'autows',         group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the auto weaponskill for the current weapon, or set it by name' },
+        { word = 'autowsbuff',     group = 'modes',       args = '[ON|OFF]',                 purpose = 'toggle the buff used before each weaponskill, or set it' },
         { word = 'display',        group = 'display',     args = '[on|off]',                 purpose = 'show or hide the status box' },
         { word = 'displaymode',    group = 'display',     args = '[on|off]',                 purpose = 'switch the mode box between one line and several' },
         { word = 'displaystyle',   group = 'display',     args = '[<style>]',                purpose = 'cycle the renderer that draws the box, or choose one by name' },

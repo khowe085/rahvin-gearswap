@@ -418,6 +418,13 @@ state.AutoWS = M { ['description'] = 'Auto Weaponskill' }
 state.AutoWS:options('OFF')
 state.AutoWS:set('OFF')
 
+-- The auto weaponskill buff. While ON, a weaponskill first uses one ready buff (Last Resort
+-- as DRK or /DRK, then Berserk, Warcry, Aggressor as WAR or /WAR), and is sent again 1.1
+-- seconds later. Weaponskill presses in between are dropped. Change it with gs c autowsbuff.
+state.AutoWSBuff = M { ['description'] = 'Auto WS Buff' }
+state.AutoWSBuff:options('ON', 'OFF')
+state.AutoWSBuff:set('ON')
+
 -- The ranged ammunition type. The engine reads it only to find the standard round a
 -- weaponskill may finish on once its own has run out. A job file carrying more than one
 -- ranged type reads it to fill the flat Ammo keys below.

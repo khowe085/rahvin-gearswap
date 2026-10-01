@@ -650,6 +650,16 @@ Uses a weaponskill for you once your TP reaches a threshold you choose. Each opt
 - The weaponskill goes through the ordinary precast, so its gear and its checks are the same as for one you type.
 - The status box shows it as `AWS` once your job file lists any entries.
 
+### AutoWSBuff
+
+Before each weaponskill, uses one ready buff in its place, then sends the weaponskill again 1.1 seconds later.
+
+- **Options:** `ON` (default), `OFF`
+- **Command:** `//gs c AutoWSBuff`, or `//gs c AutoWSBuff OFF` · **Default key:** none
+- The buffs, in order, one per weaponskill: Last Resort (DRK or /DRK), then Berserk, Warcry and Aggressor (WAR or /WAR). Each is skipped while you already have it or it is on recast, and Berserk waits while Defender is up. A subjob under level restriction offers none.
+- Weaponskill presses between the buff and the second send are dropped, for up to five seconds.
+- It applies to weaponskills from AutoWS as well as ones you use yourself.
+
 ### JobMode and JobMode2
 
 Two free-form modes for anything a job needs. The engine tracks the value and shows it; what it *means* is up to your job file. Left alone, both offer `OFF` and `ON`.
@@ -740,6 +750,7 @@ A partial value is offered as a suggestion but never accepted, so `//gs c Treasu
 | `gs c SpellReceived [ON\|OFF]` | Cycle, or set spell-received tracking |
 | `gs c Hoxne [OFF\|ON-Allow Critical\|ON-Locked]` | Cycle, or set the Hoxne Ampulla hold |
 | `gs c AutoWS [mode]` | Cycle, or jump to an auto weaponskill choice for the current weapon |
+| `gs c AutoWSBuff [ON\|OFF]` | Toggle, or set the buff used before each weaponskill |
 | `gs c JobMode [mode]` | Cycle, or jump to a job-specific mode |
 | `gs c JobMode2 [mode]` | Cycle, or jump to a second job-specific mode |
 

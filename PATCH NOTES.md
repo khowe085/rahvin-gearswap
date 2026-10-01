@@ -52,6 +52,10 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   in place of the TP builds that Aftermath level first. The mode offers `OFF` plus the
   current weapon's choices, goes back to `OFF` when the weapon mode changes, and shows on
   the status box as `AWS`. Its default key is Alt+F9, the weapon mode's key under Alt. See [AutoWS](README.md#autows).
+- **AutoWSBuff.** On by default: before a weaponskill, uses one ready buff (Last Resort as
+  DRK or /DRK, then Berserk, Warcry, Aggressor as WAR or /WAR) and sends the weaponskill
+  again 1.1 seconds later. Presses in between are dropped. Turn it off with
+  `gs c AutoWSBuff OFF`. See [AutoWSBuff](README.md#autowsbuff).
 
 ---
 
