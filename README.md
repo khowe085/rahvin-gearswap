@@ -604,6 +604,12 @@ The engine remembers which monsters you have already tagged, so it only wears TH
 
 In every mode but `None`, an **untagged** monster gets the set: that is the swing that applies the tag. The modes differ in what happens afterward.
 
+A job file can declare `TH_Spells` to limit which spells wear the set. With the list in place, only a listed spell gets TH gear at midcast, and a spell off the list does not mark the monster tagged, since it landed without TH gear. Without the list, every spell qualifies. The sample RDM lists Dia, Dia II, Dia III and Stonega, and the sample BLU lists Glutinous Dart:
+
+```lua
+TH_Spells = S { 'Dia', 'Dia II', 'Dia III', 'Stonega' }
+```
+
 Defaults to `Tag` on every job. Tagged monsters are forgotten after three minutes of inactivity, and cleared entirely when you zone.
 
 - **Command:** `//gs c TreasureHunter "Full Time"` · **Default key:** <kbd>Alt</kbd>+<kbd>F11</kbd>

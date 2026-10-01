@@ -1191,8 +1191,10 @@ return function(E)
             end
         end
         -- Treasure Hunter, with a looser test than precast's: an untagged monster target and
-        -- a set to wear. This is where a spell's Treasure Hunter gear goes on.
-        if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id] and sets.TreasureHunter then
+        -- a set to wear. This is where a spell's Treasure Hunter gear goes on. A job file
+        -- that declares TH_Spells limits it to the spells on that list.
+        if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id] and sets.TreasureHunter
+            and (not TH_Spells or TH_Spells:contains(spell.english)) then
             merge_report(built_set, sets.TreasureHunter)
             info('[' .. spell.english .. '] Set with Treasure Hunter')
         end
