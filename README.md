@@ -659,6 +659,7 @@ Before each weaponskill, uses one ready buff in its place, then sends the weapon
 - The buffs, in order, one per weaponskill: Last Resort (DRK or /DRK), then Berserk, Warcry and Aggressor (WAR or /WAR). Each is skipped while you already have it or it is on recast, and Berserk waits while Defender is up. A subjob under level restriction offers none.
 - Weaponskill presses between the buff and the second send are dropped, for up to five seconds.
 - It applies to weaponskills from AutoWS as well as ones you use yourself.
+- Only a weaponskill aimed at `<t>` is buffed. One from the game menu, or at any other target, goes off as usual with no buff, so the second send can never land on a different mob.
 
 ### JobMode and JobMode2
 

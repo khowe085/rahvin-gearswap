@@ -350,6 +350,10 @@ return function(E)
             return true
         end
         if state.AutoWSBuff.value ~= 'ON' or is_Busy or player.tp < 1000 then return false end
+        -- Only a weaponskill aimed at <t> is sent again, since that is the one target the
+        -- second send can name for sure. One from the game menu, or at any other target,
+        -- goes ahead unbuffed rather than risk landing on another mob.
+        if not spell.target.raw or spell.target.raw:lower() ~= '<t>' then return false end
 
         local ability = ready_ws_buff()
         if not ability then return false end
@@ -358,10 +362,10 @@ return function(E)
         ws_buff_lock = now + 5
         log('Auto WS Buff: [', ability, '] before [', spell.english, ']')
         windower.send_command('input /ja "' .. ability .. '" <me>')
-        local ws_name, target = spell.english, spell.target.raw or '<t>'
+        local ws_name = spell.english
         coroutine.schedule(function()
             ws_buff_refire = ws_name
-            windower.send_command('input /ws "' .. ws_name .. '" ' .. target)
+            windower.send_command('input /ws "' .. ws_name .. '" <t>')
         end, 1.1)
         return true
     end
