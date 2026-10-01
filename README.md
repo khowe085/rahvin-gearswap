@@ -161,7 +161,7 @@ end
 |---|---|
 | <kbd>F12</kbd> | Cycle your melee mode through the modes your file offers — the WAR sample offers eight and starts in `DT` |
 | <kbd>F9</kbd> | Cycle your weapon set |
-| <kbd>F11</kbd> | Cycle Treasure Hunter |
+| <kbd>Alt</kbd>+<kbd>F11</kbd> | Cycle Treasure Hunter |
 | `//gs c checksets` | Count the sets carrying gear and the ones you left undeclared, and name every declared set that is empty |
 | `//gs c info` | Turn the running commentary on or off — one line per action naming the set it wore |
 | `//gs c help` | List every command, with the key each mode is on |
@@ -499,7 +499,7 @@ Nine keys are bound when your job file loads, and released when it unloads. Thes
 |---|---|
 | <kbd>F9</kbd> | Cycle **WeaponMode** |
 | <kbd>F10</kbd> | Cycle **WeaponLock** |
-| <kbd>F11</kbd> | Cycle **TreasureHunter** |
+| <kbd>Alt</kbd>+<kbd>F11</kbd> | Cycle **TreasureHunter** |
 | <kbd>F12</kbd> | Cycle **OffenseMode** |
 | <kbd>Ctrl</kbd>+<kbd>F9</kbd> | Cycle **SpellReceived** |
 | <kbd>Ctrl</kbd>+<kbd>F10</kbd> | Cycle **Hoxne** — `OFF` → `ON-Allow Critical` → `ON-Locked` |
@@ -510,7 +510,7 @@ Nine keys are bound when your job file loads, and released when it unloads. Thes
 The engine lists the keys in chat as your job file loads, and `//gs c keybind` lists them again:
 
 ```
-Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [F11] TH Mode  [Alt+F9] Auto WS
+Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [Alt+F11] TH Mode  [Alt+F9] Auto WS
 Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)
 ```
 
@@ -603,9 +603,9 @@ The engine remembers which monsters you have already tagged, so it only wears TH
 
 In every mode but `None`, an **untagged** monster gets the set: that is the swing that applies the tag. The modes differ in what happens afterward.
 
-Defaults to `Full Time` on THF and `None` on every other job. Tagged monsters are forgotten after three minutes of inactivity, and cleared entirely when you zone.
+Defaults to `Tag` on every job. Tagged monsters are forgotten after three minutes of inactivity, and cleared entirely when you zone.
 
-- **Command:** `//gs c TreasureHunter "Full Time"` · **Default key:** <kbd>F11</kbd>
+- **Command:** `//gs c TreasureHunter "Full Time"` · **Default key:** <kbd>Alt</kbd>+<kbd>F11</kbd>
 
 ### SpellReceived
 
@@ -735,7 +735,7 @@ All commands are typed as `//gs c <command>` in the chat line, or as `/console g
 `//gs c help` lists them in game, grouped, with the key each mode is on:
 
 ```
-Modes: offensemode [F12]  weaponmode [F9]  weaponlock [F10]  treasurehunter [F11]
+Modes: offensemode [F12]  weaponmode [F9]  weaponlock [F10]  treasurehunter [Alt+F11]
 Modes: jobmode [Ctrl+F12]  jobmode2 [Ctrl+F11]  hoxne [Ctrl+F10]  spellreceived [Ctrl+F9]
 Display: display  displaymode  displaystyle  displaypos  displaycells  zero  save
 Holds: naked  weaponsonly  abysseaproc  nakedunlocked  disable  enable  enableall

@@ -181,7 +181,7 @@ return function(E)
         -- before binding it. The keys are quoted strings because hoxne is also an exported
         -- name.
         Keybinds = {
-            ['offensemode'] = 'f12', ['treasurehunter'] = 'f11', ['weaponlock'] = 'f10',
+            ['offensemode'] = 'f12', ['treasurehunter'] = '!f11', ['weaponlock'] = 'f10',
             ['weaponmode'] = 'f9', ['jobmode'] = '^f12', ['jobmode2'] = '^f11',
             ['hoxne'] = '^f10', ['spellreceived'] = '^f9', ['autows'] = '!f9',
         },

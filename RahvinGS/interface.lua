@@ -350,16 +350,14 @@ state.Hoxne = M { ['description'] = 'Hoxne' }
 state.Hoxne:options('OFF', 'ON-Allow Critical', 'ON-Locked')
 state.Hoxne:set('OFF')
 
--- Treasure Hunter handling. Only Thief gets the SATA option, and only Thief defaults to Full
--- Time. Every other job defaults to None.
+-- Treasure Hunter handling. Only Thief gets the SATA option. Every job defaults to Tag.
 state.TreasureMode = M { ['description'] = 'Treasure Mode' }
 if player.main_job == "THF" then
     state.TreasureMode:options('None', 'Tag', 'Full Time', 'SATA')
-    state.TreasureMode:set('Full Time')
 else
     state.TreasureMode:options('None', 'Tag', 'Full Time')
-    state.TreasureMode:set('None')
 end
+state.TreasureMode:set('Tag')
 
 -- Which weapon set to wear. The option list is the job file's own, and each name needs a
 -- matching sets.Weapons entry. Two names are special. 'Locked' and 'Unlocked' name no set of

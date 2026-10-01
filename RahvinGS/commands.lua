@@ -182,7 +182,7 @@ return function(E)
         { word = 'offensemode',    label = 'Stance',                    line = 1, default = 'f12',  command = 'gs c OffenseMode' },
         { word = 'weaponmode',     label = 'Weapon Mode',               line = 1, default = 'f9',   command = 'gs c WeaponMode' },
         { word = 'weaponlock',     label = 'Weapon Lock',               line = 1, default = 'f10',  command = 'gs c WeaponLock' },
-        { word = 'treasurehunter', label = 'TH Mode',                   line = 1, default = 'f11',  command = 'gs c TreasureHunter' },
+        { word = 'treasurehunter', label = 'TH Mode',                   line = 1, default = '!f11', command = 'gs c TreasureHunter' },
         { word = 'jobmode',        label = 'Job Mode',   ui = 'UI_Name',  line = 2, default = '^f12', command = 'gs c JobMode' },
         { word = 'jobmode2',       label = 'Job Mode 2', ui = 'UI_Name2', line = 2, default = '^f11', command = 'gs c JobMode2' },
         { word = 'hoxne',          label = 'Hoxne Ampulla',             line = 2, default = '^f10', command = 'gs c Hoxne' },
@@ -652,7 +652,7 @@ return function(E)
         return true
     end
 
-    -- Treasure Hunter mode, default key F11. It is the first of the eight mode commands, and
+    -- Treasure Hunter mode, default key Alt+F11. It is the first of the eight mode commands, and
     -- shows the shape they share: bare cycles to the next value, and an argument sets one
     -- exactly. A rejected argument returns true without touching the mode, so a typo changes
     -- nothing and does not reach the job file either.
