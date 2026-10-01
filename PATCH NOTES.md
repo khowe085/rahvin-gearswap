@@ -65,8 +65,12 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   using the first one missing on yourself. Name the lists in your job file as
   `AutoBuff_List`, each entry a spell or job ability with an optional `Buff` and `When`
   (`Always`, `Engaged`, `Idle`, `Combat`, `OutOfCombat`). Ported from the old suite's
-  `AutoBuffMode`. It has no default key and shows on the status box as `ABF`. See
+  `AutoBuffMode`. Its default key is F11, and it shows on the status box as `ABF`. See
   [AutoBuff](README.md#autobuff).
+- **Treasure Hunter defaults to `Tag` and moves to Alt+F11.** Every job now starts in
+  `Tag` (THF used to start in `Full Time`, every other job in `None`), and F11 goes to
+  AutoBuff. A settings file that still holds F11 for TreasureHunter keeps it and leaves
+  AutoBuff without a key; `gs c keybind default` moves both to the new defaults.
 - **`//gs export all` groups by bag.** GearSwap's own `all` export writes every item into
   one flat list. With this engine loaded, the file holds one table per bag, named as
   Windower names it (`inventory`, `safe2`, `wardrobe3`...), so you can see where each item

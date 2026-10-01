@@ -20,7 +20,7 @@
 -- CONTENTS
 --   Section 21 - Everything reachable through 'gs c ...', in six parts:
 --     Argument handling ... command_arg, and the mode validator every mode command shares
---     The keybinds ........ the table of the nine key-bound modes, the keyspec grammar every
+--     The keybinds ........ the table of the ten key-bound modes, the keyspec grammar every
 --                           key passes through, the registry of the keys this load holds, and
 --                           the bind, release and key-list functions that lifecycle.lua calls
 --                           at load and unload and the keybind command calls on a change
@@ -31,12 +31,12 @@
 --
 -- The commands serve three audiences:
 --     Typed by the player ... most of them: toggles, diagnostics and item shortcuts
---     Bound to a key ........ the nine modes lifecycle.lua binds, through keybind_apply, to
+--     Bound to a key ........ the ten modes lifecycle.lua binds, through keybind_apply, to
 --                             the keys in settings.Keybinds. By default OffenseMode,
---                             TreasureHunter, WeaponLock and WeaponMode take F12 down to F9,
+--                             AutoBuff, WeaponLock and WeaponMode take F12 down to F9,
 --                             and JobMode, JobMode2, Hoxne and SpellReceived take the same
---                             four keys with Ctrl. AutoWS takes Alt+F9, the weapon
---                             mode's key under Alt.
+--                             four keys with Ctrl. TreasureHunter takes Alt+F11 and AutoWS
+--                             Alt+F9.
 --     Sent by the engine .... update auto, enchrepair, hoxnerelock and hoxnerelease. A raw
 --                             event handler cannot equip, so it sends one of these, and the
 --                             equip lands inside the wrapped command. gs c test sends
@@ -98,7 +98,7 @@ return function(E)
     ------------------------------------------------------------------------------------------------
     -- SECTION 21 - SELF COMMANDS
     ------------------------------------------------------------------------------------------------
-    -- Everything reachable through 'gs c ...': what a player types, what the nine key
+    -- Everything reachable through 'gs c ...': what a player types, what the ten key
     -- bindings send, and the four commands the engine sends itself so that an equip lands
     -- inside a wrapped event.
 
@@ -172,7 +172,7 @@ return function(E)
 
     -- The keybinds --------------------------------------------------------------------------------
 
-    -- The nine key-bound modes in key-list order. Each row holds the command word, which is
+    -- The ten key-bound modes in key-list order. Each row holds the command word, which is
     -- also the key under settings.Keybinds, the label chat prints, the line of the key list
     -- the row sits on, the shipped default in Windower's spelling, and the command the key
     -- sends. The two job-mode rows also name, as ui, the job-file global that carries their
@@ -190,6 +190,7 @@ return function(E)
         -- Last in the table, so on a clash an engine mode above keeps its key. Listed on line 1
         -- beside the weapon mode, whose key it shares under Alt.
         { word = 'autows',         label = 'Auto WS',                   line = 1, default = '!f9',  command = 'gs c AutoWS' },
+        { word = 'autobuff',       label = 'Auto Buff',                 line = 1, default = 'f11',  command = 'gs c AutoBuff' },
     }
 
     -- The job file's name for a job-mode row, which is empty when the file left the mode
@@ -652,7 +653,7 @@ return function(E)
         return true
     end
 
-    -- Treasure Hunter mode, default key Alt+F11. It is the first of the eight mode commands, and
+    -- Treasure Hunter mode, default key Alt+F11. It is the first of the mode commands, and
     -- shows the shape they share: bare cycles to the next value, and an argument sets one
     -- exactly. A rejected argument returns true without touching the mode, so a typo changes
     -- nothing and does not reach the job file either.
@@ -698,7 +699,7 @@ return function(E)
         return true
     end
 
-    -- The auto buff. No default key. The same shape as the auto weaponskill above, with the
+    -- The auto buff, default key F11. The same shape as the auto weaponskill above, with the
     -- options brought up to date from AutoBuff_List first.
     command_handlers["autobuff"] = function(cmd, command)
         if autobuff_sync() then invalidate_layout() end

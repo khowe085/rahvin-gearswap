@@ -493,7 +493,7 @@ It holds the box positions and their look, the display style and view, the chat 
 
 ## 3. Keybinds
 
-Nine keys are bound when your job file loads, and released when it unloads. These are the defaults:
+Ten keys are bound when your job file loads, and released when it unloads. These are the defaults:
 
 | Key | Action |
 |---|---|
@@ -506,11 +506,12 @@ Nine keys are bound when your job file loads, and released when it unloads. Thes
 | <kbd>Ctrl</kbd>+<kbd>F11</kbd> | Cycle **JobMode2** |
 | <kbd>Ctrl</kbd>+<kbd>F12</kbd> | Cycle **JobMode** |
 | <kbd>Alt</kbd>+<kbd>F9</kbd> | Cycle **AutoWS** — `OFF`, then the current weapon's choices |
+| <kbd>F11</kbd> | Cycle **AutoBuff** — `OFF`, then your `AutoBuff_List` lists |
 
 The engine lists the keys in chat as your job file loads, and `//gs c keybind` lists them again:
 
 ```
-Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [Alt+F11] TH Mode  [Alt+F9] Auto WS
+Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [Alt+F11] TH Mode  [Alt+F9] Auto WS  [F11] Auto Buff
 Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)
 ```
 
@@ -680,7 +681,7 @@ Keeps a list of buffs on you. While a list is chosen, the engine casts or uses t
       },
   }
   ```
-- **Command:** `//gs c AutoBuff`, or `//gs c AutoBuff Melee` · **Default key:** none. Bind one yourself with Windower, for example `//bind !f8 gs c AutoBuff`
+- **Command:** `//gs c AutoBuff`, or `//gs c AutoBuff Melee` · **Default key:** <kbd>F11</kbd>. Move it with `//gs c keybind autobuff <key>`
 - `Name` is a spell or a job ability, spelled as the game spells it. `Buff` is the buff it keeps up; leave it out and the game's own status for the action is used, so give it where the two differ, as `Temper II` grants `Multi Strikes`. `When` is `Always` (the default), `Engaged`, `Idle`, `Combat` or `OutOfCombat`.
 - An entry is skipped while you cannot use it: not learned, above your level, on cooldown, short of MP or TP, silenced for a spell, under Amnesia for a job ability, or moving for a spell. An entry naming nothing the game knows is reported once in chat and then skipped.
 - It checks once a second and waits after each buff it sends. It does nothing in a city, while mounted or invisible, while another action is in progress, or under Sleep, Stun, Petrification, Terror or Charm.
@@ -882,7 +883,7 @@ The Warp Ring is dropped and the Trizek Ring takes its place. Two things are wor
 | `gs c help [<group>]` | List every command by group, with each mode's key. With a group, list each command's form and purpose |
 | `gs c keybind` | List the mode keys |
 | `gs c keybind <mode> <key\|none\|default>` | Move one mode to another key, take its key away, or put it back — see [Choosing your own keys](#choosing-your-own-keys) |
-| `gs c keybind default` | Put all nine mode keys back on their defaults |
+| `gs c keybind default` | Put all ten mode keys back on their defaults |
 | `gs c version` | Print the running engine version — `Include Version is [2.1]` |
 | `gs c profile <path>` | Run a Windower script named for your job, subjob and character |
 | `gs c shutdown` | Terminate the game client |
