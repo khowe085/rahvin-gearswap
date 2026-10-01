@@ -56,6 +56,11 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   DRK or /DRK, then Berserk, Warcry, Aggressor as WAR or /WAR) and sends the weaponskill
   again 1.1 seconds later. Presses in between are dropped. Turn it off with
   `gs c AutoWSBuff OFF`. See [AutoWSBuff](README.md#autowsbuff).
+- **gs c test.** `gs c test set <set>` wears a set over a naked character, and
+  `gs c test [precast|midcast] <action>` wears the precast and then the midcast gear the
+  engine and your job file choose for a spell, ability or weaponskill, without using it.
+  The job file then switches off for 30 seconds so you can inspect the gear. See
+  [Testing your sets](README.md#testing-your-sets).
 
 ---
 

@@ -714,7 +714,7 @@ Display: display  displaymode  displaystyle  displaypos  displaycells  zero  sav
 Holds: naked  weaponsonly  abysseaproc  nakedunlocked  disable  enable  enableall
 Locks: capacity  aptitude  mecisto  dynamisrp  jubilee
 Items: use  cancel  food  temps  warp  warp club  holla  dem  mea  trizek
-Utility: keybind  help  version  profile  shutdown
+Utility: keybind  help  version  profile  shutdown  test
 Diagnostics: checksets  gearreporting  enchinfo  capinfo  hoxneinfo  warn  info  debug
 gs c help <group> for each command's form, e.g. gs c help modes
 ```
@@ -859,6 +859,8 @@ The Warp Ring is dropped and the Trizek Ring takes its place. Two things are wor
 | `gs c profile <path>` | Run a Windower script named for your job, subjob and character |
 | `gs c shutdown` | Terminate the game client |
 | `gs org` | Gather every item in your sets into inventory and wardrobes with the Organizer addon. No `c`: this is GearSwap's own Organizer library |
+| `gs c test set <set>` | Wear a set over a naked character and hold it for 30 seconds — see [Testing your sets](#testing-your-sets) |
+| `gs c test [precast\|midcast] <action>` | Wear the gear a spell, ability or weaponskill would, without using it, and hold it for 30 seconds |
 
 `//gs c profile raid` runs the Windower script `raid/WAR_SAM_Yourname`: the folder you name, then a script named for your main job, subjob and character. Name a folder of letters and digits: any other character splits the name, and the parts are joined with underscores, so `//gs c profile scripts/raid` runs `scripts_raid/WAR_SAM_Yourname`.
 
@@ -869,6 +871,22 @@ organizer_items = { "Sublime Sushi", "Shihei" }
 ```
 
 Because it collects every set, a job file that names more items than inventory holds is refused with `Your sets table contains too many items.`
+
+### Testing your sets
+
+`gs c test` puts gear on so you can look at it, then switches your job file off for 30 seconds, as `//gs disable` does, so nothing swaps it away. After 30 seconds the file switches back on and your idle or engaged gear goes back on.
+
+```
+//gs c test set sets.Midcast.Cure
+//gs c test Cure IV
+//gs c test precast Cure IV
+//gs c test Savage Blade
+```
+
+- **`gs c test set <set>`** strips all sixteen slots and wears the set, so a slot the set leaves out shows up empty. The path is read as `//gs equip` reads one, with or without the leading `sets.`.
+- **`gs c test [precast|midcast] <action>`** strips every slot but main, sub and range, then runs the engine's and your job file's precast for the named spell, ability or weaponskill, and then its midcast, each in its own swap, as for a real use. `precast` stops before midcast; `midcast`, or no word at all, runs both. The info line names the set each step used, as for a real action. The action is aimed at your target, or at you with none, and nothing is used: no can't-act checks, busy window, Hoxne window or multibox announce apply, and the holds and the weapon lock keep their slots as they always do.
+- **Your job file can tell a test apart.** The spell your `precast_custom` and `midcast_custom` receive carries `spell.test = true`, so a check meant only for a real use can skip it.
+- **During the 30 seconds**, another `gs c test` runs straight away and starts the 30 seconds over. A bare `//gs enable` or `//gs disable` takes over from the timer and leaves the file the way you set it. Nothing else you type with `gs c` is answered until the hold ends.
 
 ### Diagnostics
 
@@ -954,7 +972,7 @@ The highest value wins: a Mecisto. Mantle whose augment is worth more than eithe
 
 ### Engine-internal
 
-`gs c help` leaves these words out: they belong to the engine, and you never need to type them. Four of them — `update auto`, `enchrepair`, `hoxnerelock` and `hoxnerelease` — are commands the engine sends itself. Every word here still answers if typed, and all are listed so you recognize them in a verbose log.
+`gs c help` leaves these words out: they belong to the engine, and you never need to type them. Five of them — `update auto`, `enchrepair`, `hoxnerelock`, `hoxnerelease` and `testpass` — are commands the engine sends itself. Every word here still answers if typed, and all are listed so you recognize them in a verbose log.
 
 | Command | What it does |
 |---|---|
@@ -965,6 +983,7 @@ The highest value wins: a Mecisto. Mantle whose augment is worth more than eithe
 | `gs c enchrepair` | Sent by the enchanted item engine when an item it is using is knocked out of its slot |
 | `gs c hoxnerelock` | Sent by the Hoxne Ampulla's background check, re-asserting its hold on range and ammo |
 | `gs c hoxnerelease` | Sent by the Hoxne Ampulla's background check, freeing a stranded Ampulla after a reload |
+| `gs c testpass <n>` | Sent by `gs c test` to run the action's midcast in a swap of its own |
 
 ---
 

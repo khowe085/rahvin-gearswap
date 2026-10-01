@@ -154,6 +154,10 @@ do
     -- while the job file itself is switched off, when the engine has nothing to say.
     windower.register_event('addon command', E.native_disable_notice)
 
+    -- The same event for gs c test's hold, registered raw. The hold switches the job file
+    -- off, and a wrapped handler would be held back for exactly as long as the hold stands.
+    windower.raw_register_event('addon command', E.test_hold_watch)
+
     -- A worked example for a job file, commented out: reacting to a tell or to party chat.
     -- It registers nothing here.
     --[[

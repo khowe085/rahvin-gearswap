@@ -46,6 +46,7 @@ return function(E)
     local weapon_lock_drop, release_implement = E.weapon_lock_drop, E.release_implement
     local strip_clear, disable_clear, sleep_held = E.strip_clear, E.disable_clear, E.sleep_held
     local keybind_apply, keybind_release, keybind_list = E.keybind_apply, E.keybind_release, E.keybind_list
+    local test_hold_clear = E.test_hold_clear
 
     ------------------------------------------------------------------------------------------------
     -- SECTION 22 - JOB LIFECYCLE
@@ -132,6 +133,10 @@ return function(E)
         -- settings table may already hold another character's keys at unload, so it is not
         -- read.
         keybind_release()
+
+        -- A gs c test hold switched the whole job file off. Its timer would outlive this
+        -- file, so the switch is put back here.
+        test_hold_clear()
 
         -- The disable hold, then the strip hold. Each forgets its slots and enables only
         -- those no lower layer still shuts. No rebuild follows the teardown, so a hold left
