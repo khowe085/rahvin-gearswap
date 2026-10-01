@@ -19,6 +19,11 @@
 -- globals, and a job file overrides them after this file returns.
 include('RahvinGS/interface')
 
+-- GearSwap's bundled Organizer library. It adds one command, gs org, which gathers every item
+-- in sets (and in organizer_items, if a job file defines it) and has the Organizer addon fetch
+-- them into inventory and wardrobes. It does nothing until that command is typed.
+include('organizer-lib')
+
 ----------------------------------------------------------------------------------------------------
 -- COMPONENT: the composition root -- section 23: construction and event registration
 ----------------------------------------------------------------------------------------------------
