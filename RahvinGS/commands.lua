@@ -32,10 +32,10 @@
 -- The commands serve three audiences:
 --     Typed by the player ... most of them: toggles, diagnostics and item shortcuts
 --     Bound to a key ........ the ten modes lifecycle.lua binds, through keybind_apply, to
---                             the keys in settings.Keybinds. By default OffenseMode,
---                             AutoBuff, WeaponLock and WeaponMode take F12 down to F9,
---                             and JobMode, JobMode2, Hoxne and SpellReceived take the same
---                             four keys with Ctrl. TreasureHunter takes Alt+F11 and AutoWS
+--                             the keys in settings.Keybinds. By default AutoBuff, AutoWS,
+--                             OffenseMode and WeaponMode take F12 down to F9, and JobMode,
+--                             JobMode2, Hoxne and SpellReceived take the same four keys
+--                             with Ctrl. TreasureHunter takes Alt+F11 and WeaponLock
 --                             Alt+F9.
 --     Sent by the engine .... update auto, enchrepair, hoxnerelock and hoxnerelease. A raw
 --                             event handler cannot equip, so it sends one of these, and the
@@ -179,19 +179,19 @@ return function(E)
     -- label. That name is read at print time, and the label here stands in when it is empty.
     -- The sent command is mixed case, and the dispatcher lowercases it.
     local keybind_modes = {
-        { word = 'offensemode',    label = 'Stance',                    line = 1, default = 'f12',  command = 'gs c OffenseMode' },
+        { word = 'offensemode',    label = 'Stance',                    line = 1, default = 'f10',  command = 'gs c OffenseMode' },
         { word = 'weaponmode',     label = 'Weapon Mode',               line = 1, default = 'f9',   command = 'gs c WeaponMode' },
-        { word = 'weaponlock',     label = 'Weapon Lock',               line = 1, default = 'f10',  command = 'gs c WeaponLock' },
+        { word = 'weaponlock',     label = 'Weapon Lock',               line = 1, default = '!f9',  command = 'gs c WeaponLock' },
         { word = 'treasurehunter', label = 'TH Mode',                   line = 1, default = '!f11', command = 'gs c TreasureHunter' },
         { word = 'jobmode',        label = 'Job Mode',   ui = 'UI_Name',  line = 2, default = '^f12', command = 'gs c JobMode' },
         { word = 'jobmode2',       label = 'Job Mode 2', ui = 'UI_Name2', line = 2, default = '^f11', command = 'gs c JobMode2' },
         { word = 'hoxne',          label = 'Hoxne Ampulla',             line = 2, default = '^f10', command = 'gs c Hoxne' },
         { word = 'spellreceived',  label = 'Spell Received (Multibox)', line = 2, default = '^f9',  command = 'gs c SpellReceived' },
         -- Last in the table, so on a clash an engine mode above keeps its key. Listed on line 1
-        -- beside the weapon mode, whose key it shares under Alt.
-        { word = 'autows',         label = 'Auto WS',                   line = 1, default = '!f9',  command = 'gs c AutoWS' },
+        -- beside the other F-key modes.
+        { word = 'autows',         label = 'Auto WS',                   line = 1, default = 'f11',  command = 'gs c AutoWS' },
         -- On line 2, because line 1 would pass the 100 characters the game prints unwrapped.
-        { word = 'autobuff',       label = 'Auto Buff',                 line = 2, default = 'f11',  command = 'gs c AutoBuff' },
+        { word = 'autobuff',       label = 'Auto Buff',                 line = 2, default = 'f12',  command = 'gs c AutoBuff' },
     }
 
     -- The job file's name for a job-mode row, which is empty when the file left the mode
@@ -673,7 +673,7 @@ return function(E)
         return true
     end
 
-    -- The auto weaponskill, default key Alt+F9. The same shape as the mode command above, but
+    -- The auto weaponskill, default key F11. The same shape as the mode command above, but
     -- the options come from AutoWS_List for the current weapon mode, so they are brought up
     -- to date first. Choosing an option changes no gear, so nothing is rebuilt.
     command_handlers["autows"] = function(cmd, command)
@@ -700,7 +700,7 @@ return function(E)
         return true
     end
 
-    -- The auto buff, default key F11. The same shape as the auto weaponskill above, with the
+    -- The auto buff, default key F12. The same shape as the auto weaponskill above, with the
     -- options brought up to date from AutoBuff_List first.
     command_handlers["autobuff"] = function(cmd, command)
         if autobuff_sync() then invalidate_layout() end
@@ -1192,7 +1192,7 @@ return function(E)
         use_enchantment("Trizek Ring")
     end
 
-    -- Offense mode, default key F12. The plainest of the eight, with no state to release and
+    -- Offense mode, default key F10. The plainest of the eight, with no state to release and
     -- no slot to take.
     command_handlers["offensemode"] = function(cmd, command)
         if command == 'offensemode' then
@@ -1235,7 +1235,7 @@ return function(E)
         return true
     end
 
-    -- Weapon lock, default key F10. The shared mode shape, plus the resolution of the new
+    -- Weapon lock, default key Alt+F9. The shared mode shape, plus the resolution of the new
     -- value into the lock flags before the echo, so no build path reads the mode itself.
     -- Hoxne owns range above the lock, so Locked+R is refused while Hoxne is on. When it is
     -- given as an argument, the lock stays where it was. The cycle passes over it, since a

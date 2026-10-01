@@ -69,7 +69,7 @@ A map of what the suite does. Each line links to the section that explains it.
 ## Holds and locks
 
 - **Bare a slot, or freeze it.** `gs c naked`, `gs c weaponsonly` and `gs c abysseaproc` strip slots and keep them bare, and `gs c disable <slot>` keeps a slot wearing what it wears. → [Strip holds](#strip-holds), [The disable hold](#the-disable-hold), [How the holds stack](#how-the-holds-stack)
-- **Keep something on.** The weapon lock (<kbd>F10</kbd>) keeps your weapons in hand, the Hoxne Ampulla hold keeps the Ampulla in your ammo slot, and `gs c capacity`, `gs c dynamisrp` and `gs c jubilee` keep on the best capacity cape, Dynamis neck or Jubilee Ring you carry. → [The weapon lock](#the-weapon-lock), [The Hoxne Ampulla hold](#the-hoxne-ampulla-hold), [Carried-item locks](#carried-item-locks)
+- **Keep something on.** The weapon lock (<kbd>Alt</kbd>+<kbd>F9</kbd>) keeps your weapons in hand, the Hoxne Ampulla hold keeps the Ampulla in your ammo slot, and `gs c capacity`, `gs c dynamisrp` and `gs c jubilee` keep on the best capacity cape, Dynamis neck or Jubilee Ring you carry. → [The weapon lock](#the-weapon-lock), [The Hoxne Ampulla hold](#the-hoxne-ampulla-hold), [Carried-item locks](#carried-item-locks)
 - **`gs c use <item>` uses any enchanted item**: it equips the item, waits until the game allows the use, uses it and gives the slot back. → [Enchanted items](#enchanted-items)
 
 ## Multibox and tracking
@@ -159,7 +159,7 @@ end
 
 | | |
 |---|---|
-| <kbd>F12</kbd> | Cycle your melee mode through the modes your file offers — the WAR sample offers eight and starts in `DT` |
+| <kbd>F10</kbd> | Cycle your melee mode through the modes your file offers — the WAR sample offers eight and starts in `DT` |
 | <kbd>F9</kbd> | Cycle your weapon set |
 | <kbd>Alt</kbd>+<kbd>F11</kbd> | Cycle Treasure Hunter |
 | `//gs c checksets` | Count the sets carrying gear and the ones you left undeclared, and name every declared set that is empty |
@@ -498,26 +498,26 @@ Ten keys are bound when your job file loads, and released when it unloads. These
 | Key | Action |
 |---|---|
 | <kbd>F9</kbd> | Cycle **WeaponMode** |
-| <kbd>F10</kbd> | Cycle **WeaponLock** |
+| <kbd>F10</kbd> | Cycle **OffenseMode** |
+| <kbd>F11</kbd> | Cycle **AutoWS** — `OFF`, then the current weapon's choices |
+| <kbd>F12</kbd> | Cycle **AutoBuff** — `OFF`, then your `AutoBuff_List` lists |
+| <kbd>Alt</kbd>+<kbd>F9</kbd> | Cycle **WeaponLock** |
 | <kbd>Alt</kbd>+<kbd>F11</kbd> | Cycle **TreasureHunter** |
-| <kbd>F12</kbd> | Cycle **OffenseMode** |
 | <kbd>Ctrl</kbd>+<kbd>F9</kbd> | Cycle **SpellReceived** |
 | <kbd>Ctrl</kbd>+<kbd>F10</kbd> | Cycle **Hoxne** — `OFF` → `ON-Allow Critical` → `ON-Locked` |
 | <kbd>Ctrl</kbd>+<kbd>F11</kbd> | Cycle **JobMode2** |
 | <kbd>Ctrl</kbd>+<kbd>F12</kbd> | Cycle **JobMode** |
-| <kbd>Alt</kbd>+<kbd>F9</kbd> | Cycle **AutoWS** — `OFF`, then the current weapon's choices |
-| <kbd>F11</kbd> | Cycle **AutoBuff** — `OFF`, then your `AutoBuff_List` lists |
 
 The engine lists the keys in chat as your job file loads, and `//gs c keybind` lists them again:
 
 ```
-Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [Alt+F11] TH Mode  [Alt+F9] Auto WS
-Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)  [F11] Auto Buff
+Keys: [F10] Stance  [F9] Weapon Mode  [Alt+F9] Weapon Lock  [Alt+F11] TH Mode  [F11] Auto WS
+Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)  [F12] Auto Buff
 ```
 
 In that list OffenseMode is called *Stance*, the name the status box shortens to `STN`. When your file names its job modes with `UI_Name` or `UI_Name2`, their keys lead the second line, under the names you gave them.
 
-Each key sends a command you can also type or put in a macro — <kbd>F12</kbd> sends `gs c OffenseMode`, for example. The commands are under [Mode commands](#mode-commands).
+Each key sends a command you can also type or put in a macro — <kbd>F10</kbd> sends `gs c OffenseMode`, for example. The commands are under [Mode commands](#mode-commands).
 
 ### Choosing your own keys
 
@@ -535,7 +535,7 @@ Each key sends a command you can also type or put in a macro — <kbd>F12</kbd> 
 The mode words are `offensemode`, `weaponmode`, `weaponlock`, `treasurehunter`, `jobmode`, `jobmode2`, `hoxne`, `spellreceived`, `autows` and `autobuff`. In the short spelling, `^` means Ctrl, `!` Alt and `~` Shift.
 
 - **Each change is saved** in the character's own settings file, and confirmed: `TH Mode bound to [Ctrl+F5]; any other Windower bind on this key is replaced.`
-- **A key another mode already uses is refused**, and the answer names that mode: `[F12] is bound to Stance; free it first (gs c keybind offensemode none) or choose another key.`
+- **A key another mode already uses is refused**, and the answer names that mode: `[F10] is bound to Stance; free it first (gs c keybind offensemode none) or choose another key.`
 - **A key bound here does not do its usual job in game** while your job file is loaded. While <kbd>F9</kbd> is bound to a mode, for example, it does not target the nearest player.
 - **A mode set to `none` leaves that key alone.** The engine binds nothing to it at load and releases nothing from it at unload, so a Windower bind of your own on that key survives job changes.
 - **The keys live in the `<Keybinds>` section of the settings file**, under the mode words above, in the short spelling. A value there that is not a key is replaced by the default for that session, with a line saying so.
@@ -556,7 +556,7 @@ The main damage-versus-survival switch. Drives `sets.OffenseMode`, `sets.WS`, `s
   state.OffenseMode:options('TP','PDL','ACC','DT','MEVA','CRIT','SB')
   state.OffenseMode:set('DT')
   ```
-- **Command:** `//gs c OffenseMode PDL` · **Default key:** <kbd>F12</kbd>
+- **Command:** `//gs c OffenseMode PDL` · **Default key:** <kbd>F10</kbd>
 
 Every option you list needs its own `sets.OffenseMode.<Name>` and `sets.Idle.<Name>` — see [Core sets](#core-sets) for what a missing one costs.
 
@@ -586,7 +586,7 @@ Whether anything but the weapon mode may change main and sub. The mode says what
 | `Locked+R` | Corsair only — holds range with main and sub |
 | `Geomancy` | Geomancer only — `Locked`, except for a Geomancy spell, whose set's main and sub swap in for the cast |
 
-- **Command:** `//gs c weaponlock Locked` · **Default key:** <kbd>F10</kbd>
+- **Command:** `//gs c weaponlock Locked` · **Default key:** <kbd>Alt</kbd>+<kbd>F9</kbd>
 - **The engine fixes this list per job and a job file never redeclares it** — a job file's own `:options()` call wipes it. To boot locked, call `state.WeaponLock:set('Locked')` and nothing else.
 - `Locked+R` is refused while a Hoxne mode is on, because the Hoxne hold outranks the weapon lock on range: `Weapon Lock: [Locked+R] refused; Hoxne Ampulla holds range.` Asked for by name, the lock stays where it was; while cycling, `Locked+R` is skipped.
 - Whatever the value, a weaponskill never changes main or sub — see [Weaponskills](#weaponskills). The full behavior is under [The weapon lock](#the-weapon-lock).
@@ -650,7 +650,7 @@ Uses a weaponskill for you once your TP reaches a threshold you choose. Each opt
       Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
   }
   ```
-- **Command:** `//gs c AutoWS`, or `//gs c AutoWS "Savage Blade 1750"` · **Default key:** <kbd>Alt</kbd>+<kbd>F9</kbd>, the weapon mode's key under Alt. Move it with `//gs c keybind autows <key>`
+- **Command:** `//gs c AutoWS`, or `//gs c AutoWS "Savage Blade 1750"` · **Default key:** <kbd>F11</kbd>. Move it with `//gs c keybind autows <key>`
 - The keys are your `WeaponMode` options. A weapon mode with no entry offers `OFF` alone, and changing the weapon mode sets AutoWS back to `OFF`.
 - `AM2` or `AM3` in place of a number builds that Aftermath level at 2000 or 3000 TP, then uses the weaponskill at 1000 while that level, or a higher one, is up.
 - It acts only while you are engaged, on your battle target (`<t>`). It waits while another action is in progress, and while you are under Amnesia, Sleep, Stun, Petrification, Terror or Charm. It checks on every TP change, and after it sends a weaponskill it waits two seconds before sending another.
@@ -687,7 +687,7 @@ Keeps a list of buffs on you. While a list is chosen, the engine casts or uses t
       },
   }
   ```
-- **Command:** `//gs c AutoBuff`, or `//gs c AutoBuff Melee` · **Default key:** <kbd>F11</kbd>. Move it with `//gs c keybind autobuff <key>`
+- **Command:** `//gs c AutoBuff`, or `//gs c AutoBuff Melee` · **Default key:** <kbd>F12</kbd>. Move it with `//gs c keybind autobuff <key>`
 - `Name` is a spell or a job ability, spelled as the game spells it. `Buff` is the buff it keeps up; leave it out and the game's own status for the action is used, so give it where the two differ, as `Temper II` grants `Multi Strikes`. `When` is `Always` (the default), `Engaged`, `Idle`, `Combat` or `OutOfCombat`.
 - An entry is skipped while you cannot use it: not learned, above your level, on cooldown, short of MP or TP, silenced for a spell, under Amnesia for a job ability, or moving for a spell. An entry naming nothing the game knows is reported once in chat and then skipped.
 - It checks once a second and waits after each buff it sends. It does nothing in a city, while mounted or invisible, while another action is in progress, or under Sleep, Stun, Petrification, Terror or Charm.
@@ -742,7 +742,7 @@ All commands are typed as `//gs c <command>` in the chat line, or as `/console g
 `//gs c help` lists them in game, grouped, with the key each mode is on:
 
 ```
-Modes: offensemode [F12]  weaponmode [F9]  weaponlock [F10]  treasurehunter [Alt+F11]
+Modes: offensemode [F10]  weaponmode [F9]  weaponlock [Alt+F9]  treasurehunter [Alt+F11]
 Modes: jobmode [Ctrl+F12]  jobmode2 [Ctrl+F11]  hoxne [Ctrl+F10]  spellreceived [Ctrl+F9]
 Display: display  displaymode  displaystyle  displaypos  displaycells  zero  save
 Holds: naked  weaponsonly  abysseaproc  nakedunlocked  disable  enable  enableall
@@ -1118,7 +1118,7 @@ Disable: //gs disable leaves the slot untracked -- use //gs c disable <slot>... 
 
 ### The weapon lock
 
-`gs c weaponlock` is a [mode](#weaponlock) rather than a momentary hold, and <kbd>F10</kbd> cycles it by default. Under `Locked`, `sets.Weapons[<your weapon mode>]` is the only thing that changes main and sub, in every phase — precast, midcast and aftercast alike. No other set can put a different weapon beside the locked pair: not a pet, Sublimation or movement set, and not a buff set. The pair starts as whatever you are wearing, so a slot the mode names nothing for is held as found.
+`gs c weaponlock` is a [mode](#weaponlock) rather than a momentary hold, and <kbd>Alt</kbd>+<kbd>F9</kbd> cycles it by default. Under `Locked`, `sets.Weapons[<your weapon mode>]` is the only thing that changes main and sub, in every phase — precast, midcast and aftercast alike. No other set can put a different weapon beside the locked pair: not a pet, Sublimation or movement set, and not a buff set. The pair starts as whatever you are wearing, so a slot the mode names nothing for is held as found.
 
 Three jobs get a value of their own:
 

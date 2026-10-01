@@ -51,7 +51,7 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   a weaponskill and a TP value: `Naegling = { { 'Savage Blade', 1000 } }`. `AM2` or `AM3`
   in place of the TP builds that Aftermath level first. The mode offers `OFF` plus the
   current weapon's choices, goes back to `OFF` when the weapon mode changes, and shows on
-  the status box as `AWS`. Its default key is Alt+F9, the weapon mode's key under Alt. See [AutoWS](README.md#autows).
+  the status box as `AWS`. Its default key is F11. See [AutoWS](README.md#autows).
 - **AutoWSBuff.** On by default: before a weaponskill, uses one ready buff (Last Resort as
   DRK or /DRK, then Berserk, Warcry, Aggressor as WAR or /WAR) and sends the weaponskill
   again 1.1 seconds later. Presses in between are dropped. Turn it off with
@@ -65,12 +65,14 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   using the first one missing on yourself. Name the lists in your job file as
   `AutoBuff_List`, each entry a spell or job ability with an optional `Buff` and `When`
   (`Always`, `Engaged`, `Idle`, `Combat`, `OutOfCombat`). Ported from the old suite's
-  `AutoBuffMode`. Its default key is F11, and it shows on the status box as `ABF`. See
+  `AutoBuffMode`. Its default key is F12, and it shows on the status box as `ABF`. See
   [AutoBuff](README.md#autobuff).
-- **Treasure Hunter defaults to `Tag` and moves to Alt+F11.** Every job now starts in
-  `Tag` (THF used to start in `Full Time`, every other job in `None`), and F11 goes to
-  AutoBuff. A settings file that still holds F11 for TreasureHunter keeps it and leaves
-  AutoBuff without a key; `gs c keybind default` moves both to the new defaults.
+- **Treasure Hunter defaults to `Tag`.** Every job now starts in `Tag` (THF used to start
+  in `Full Time`, every other job in `None`).
+- **New default keys.** F10 Stance (OffenseMode), F11 AutoWS, F12 AutoBuff, Alt+F9 Weapon
+  Lock, Alt+F11 Treasure Hunter. F9 Weapon Mode and the Ctrl keys are unchanged. A
+  settings file keeps the keys it already holds, and a clash leaves the later mode
+  without a key; `gs c keybind default` moves every mode to the new defaults.
 - **`//gs export all` groups by bag.** GearSwap's own `all` export writes every item into
   one flat list. With this engine loaded, the file holds one table per bag, named as
   Windower names it (`inventory`, `safe2`, `wardrobe3`...), so you can see where each item
