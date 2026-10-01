@@ -20,7 +20,7 @@
 -- CONTENTS
 --   Section 21 - Everything reachable through 'gs c ...', in six parts:
 --     Argument handling ... command_arg, and the mode validator every mode command shares
---     The keybinds ........ the table of the eight key-bound modes, the keyspec grammar every
+--     The keybinds ........ the table of the nine key-bound modes, the keyspec grammar every
 --                           key passes through, the registry of the keys this load holds, and
 --                           the bind, release and key-list functions that lifecycle.lua calls
 --                           at load and unload and the keybind command calls on a change
@@ -31,11 +31,12 @@
 --
 -- The commands serve three audiences:
 --     Typed by the player ... most of them: toggles, diagnostics and item shortcuts
---     Bound to a key ........ the eight modes lifecycle.lua binds, through keybind_apply, to
+--     Bound to a key ........ the nine modes lifecycle.lua binds, through keybind_apply, to
 --                             the keys in settings.Keybinds. By default OffenseMode,
 --                             TreasureHunter, WeaponLock and WeaponMode take F12 down to F9,
 --                             and JobMode, JobMode2, Hoxne and SpellReceived take the same
---                             four keys with Ctrl.
+--                             four keys with Ctrl. AutoWS takes Alt+F9, the weapon
+--                             mode's key under Alt.
 --     Sent by the engine .... update auto, enchrepair, hoxnerelock and hoxnerelease. A raw
 --                             event handler cannot equip, so it sends one of these, and the
 --                             equip lands inside the wrapped command.
@@ -93,7 +94,7 @@ return function(E)
     ------------------------------------------------------------------------------------------------
     -- SECTION 21 - SELF COMMANDS
     ------------------------------------------------------------------------------------------------
-    -- Everything reachable through 'gs c ...': what a player types, what the eight key
+    -- Everything reachable through 'gs c ...': what a player types, what the nine key
     -- bindings send, and the four commands the engine sends itself so that an equip lands
     -- inside a wrapped event.
 
@@ -167,7 +168,7 @@ return function(E)
 
     -- The keybinds --------------------------------------------------------------------------------
 
-    -- The eight key-bound modes in key-list order. Each row holds the command word, which is
+    -- The nine key-bound modes in key-list order. Each row holds the command word, which is
     -- also the key under settings.Keybinds, the label chat prints, the line of the key list
     -- the row sits on, the shipped default in Windower's spelling, and the command the key
     -- sends. The two job-mode rows also name, as ui, the job-file global that carries their
@@ -182,6 +183,9 @@ return function(E)
         { word = 'jobmode2',       label = 'Job Mode 2', ui = 'UI_Name2', line = 2, default = '^f11', command = 'gs c JobMode2' },
         { word = 'hoxne',          label = 'Hoxne Ampulla',             line = 2, default = '^f10', command = 'gs c Hoxne' },
         { word = 'spellreceived',  label = 'Spell Received (Multibox)', line = 2, default = '^f9',  command = 'gs c SpellReceived' },
+        -- Last in the table, so on a clash an engine mode above keeps its key. Listed on line 1
+        -- beside the weapon mode, whose key it shares under Alt.
+        { word = 'autows',         label = 'Auto WS',                   line = 1, default = '!f9',  command = 'gs c AutoWS' },
     }
 
     -- The job file's name for a job-mode row, which is empty when the file left the mode
@@ -268,6 +272,9 @@ return function(E)
         local taken, wants = {}, {}
         for i, row in ipairs(keybind_modes) do
             local want = settings.Keybinds[row.word]
+            -- A row added after the settings file was written has no value of its own yet,
+            -- and takes its default without a notice.
+            if want == nil then want = row.default end
             if not keyspec_valid_setting(want) then
                 notice(("Keybinds: '%s' for %s is not a key; using the default [%s]."):format(
                     tostring(want), keybind_label(row), keyspec_human(row.default)))
@@ -656,7 +663,7 @@ return function(E)
         return true
     end
 
-    -- The auto weaponskill. No default key. The same shape as the mode command above, but
+    -- The auto weaponskill, default key Alt+F9. The same shape as the mode command above, but
     -- the options come from AutoWS_List for the current weapon mode, so they are brought up
     -- to date first. Choosing an option changes no gear, so nothing is rebuilt.
     command_handlers["autows"] = function(cmd, command)
@@ -1281,7 +1288,7 @@ return function(E)
             if refuse_logged_out('Keybind') then return true end
             for _, row in ipairs(keybind_modes) do settings.Keybinds[row.word] = row.default end
             keybind_apply()
-            notice('All eight keys reset to their defaults.')
+            notice('All mode keys reset to their defaults.')
             save_settings()
             return true
         end

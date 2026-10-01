@@ -493,7 +493,7 @@ It holds the box positions and their look, the display style and view, the chat 
 
 ## 3. Keybinds
 
-Eight keys are bound when your job file loads, and released when it unloads. These are the defaults:
+Nine keys are bound when your job file loads, and released when it unloads. These are the defaults:
 
 | Key | Action |
 |---|---|
@@ -505,11 +505,12 @@ Eight keys are bound when your job file loads, and released when it unloads. The
 | <kbd>Ctrl</kbd>+<kbd>F10</kbd> | Cycle **Hoxne** — `OFF` → `ON-Allow Critical` → `ON-Locked` |
 | <kbd>Ctrl</kbd>+<kbd>F11</kbd> | Cycle **JobMode2** |
 | <kbd>Ctrl</kbd>+<kbd>F12</kbd> | Cycle **JobMode** |
+| <kbd>Alt</kbd>+<kbd>F9</kbd> | Cycle **AutoWS** — `OFF`, then the current weapon's choices |
 
 The engine lists the keys in chat as your job file loads, and `//gs c keybind` lists them again:
 
 ```
-Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [F11] TH Mode
+Keys: [F12] Stance  [F9] Weapon Mode  [F10] Weapon Lock  [F11] TH Mode  [Alt+F9] Auto WS
 Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)
 ```
 
@@ -527,10 +528,10 @@ Each key sends a command you can also type or put in a macro — <kbd>F12</kbd> 
 //gs c keybind jobmode ~f12            -- Shift+F12
 //gs c keybind hoxne none              -- no key; //gs c hoxne still cycles it
 //gs c keybind hoxne default           -- back to its default key
-//gs c keybind default                 -- all eight back to their defaults
+//gs c keybind default                 -- all nine back to their defaults
 ```
 
-The mode words are `offensemode`, `weaponmode`, `weaponlock`, `treasurehunter`, `jobmode`, `jobmode2`, `hoxne` and `spellreceived`. In the short spelling, `^` means Ctrl, `!` Alt and `~` Shift.
+The mode words are `offensemode`, `weaponmode`, `weaponlock`, `treasurehunter`, `jobmode`, `jobmode2`, `hoxne`, `spellreceived` and `autows`. In the short spelling, `^` means Ctrl, `!` Alt and `~` Shift.
 
 - **Each change is saved** in the character's own settings file, and confirmed: `TH Mode bound to [Ctrl+F5]; any other Windower bind on this key is replaced.`
 - **A key another mode already uses is refused**, and the answer names that mode: `[F12] is bound to Stance; free it first (gs c keybind offensemode none) or choose another key.`
@@ -642,7 +643,7 @@ Uses a weaponskill for you once your TP reaches a threshold you choose. Each opt
       Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
   }
   ```
-- **Command:** `//gs c AutoWS`, or `//gs c AutoWS "Savage Blade 1750"` · **Default key:** none. Bind one yourself with Windower, for example `//bind !f9 gs c AutoWS`
+- **Command:** `//gs c AutoWS`, or `//gs c AutoWS "Savage Blade 1750"` · **Default key:** <kbd>Alt</kbd>+<kbd>F9</kbd>, the weapon mode's key under Alt. Move it with `//gs c keybind autows <key>`
 - The keys are your `WeaponMode` options. A weapon mode with no entry offers `OFF` alone, and changing the weapon mode sets AutoWS back to `OFF`.
 - `AM2` or `AM3` in place of a number builds that Aftermath level at 2000 or 3000 TP, then uses the weaponskill at 1000 while that level, or a higher one, is up.
 - It acts only while you are engaged, on your battle target (`<t>`). It waits while another action is in progress, and while you are under Amnesia, Sleep, Stun, Petrification, Terror or Charm. It checks on every TP change, and after it sends a weaponskill it waits two seconds before sending another.
@@ -842,7 +843,7 @@ The Warp Ring is dropped and the Trizek Ring takes its place. Two things are wor
 | `gs c help [<group>]` | List every command by group, with each mode's key. With a group, list each command's form and purpose |
 | `gs c keybind` | List the mode keys |
 | `gs c keybind <mode> <key\|none\|default>` | Move one mode to another key, take its key away, or put it back — see [Choosing your own keys](#choosing-your-own-keys) |
-| `gs c keybind default` | Put all eight mode keys back on their defaults |
+| `gs c keybind default` | Put all nine mode keys back on their defaults |
 | `gs c version` | Print the running engine version — `Include Version is [2.1]` |
 | `gs c profile <path>` | Run a Windower script named for your job, subjob and character |
 | `gs c shutdown` | Terminate the game client |

@@ -51,7 +51,7 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   a weaponskill and a TP value: `Naegling = { { 'Savage Blade', 1000 } }`. `AM2` or `AM3`
   in place of the TP builds that Aftermath level first. The mode offers `OFF` plus the
   current weapon's choices, goes back to `OFF` when the weapon mode changes, and shows on
-  the status box as `AWS`. It has no default key. See [AutoWS](README.md#autows).
+  the status box as `AWS`. Its default key is Alt+F9, the weapon mode's key under Alt. See [AutoWS](README.md#autows).
 
 ---
 

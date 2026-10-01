@@ -183,7 +183,7 @@ return function(E)
         Keybinds = {
             ['offensemode'] = 'f12', ['treasurehunter'] = 'f11', ['weaponlock'] = 'f10',
             ['weaponmode'] = 'f9', ['jobmode'] = '^f12', ['jobmode2'] = '^f11',
-            ['hoxne'] = '^f10', ['spellreceived'] = '^f9',
+            ['hoxne'] = '^f10', ['spellreceived'] = '^f9', ['autows'] = '!f9',
         },
         -- One stamp per versioned silo, per character: the version of that silo the
         -- character last loaded, under the character's lowercased name.
