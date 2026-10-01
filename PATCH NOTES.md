@@ -67,6 +67,12 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   (`Always`, `Engaged`, `Idle`, `Combat`, `OutOfCombat`). Ported from the old suite's
   `AutoBuffMode`. It has no default key and shows on the status box as `ABF`. See
   [AutoBuff](README.md#autobuff).
+- **`//gs export all` groups by bag.** GearSwap's own `all` export writes every item into
+  one flat list. With this engine loaded, the file holds one table per bag, named as
+  Windower names it (`inventory`, `safe2`, `wardrobe3`...), so you can see where each item
+  is. Empty bags are left out, and `noaugments` now drops augments here too. Every other
+  export, and `all` with `compact` or `bgwiki`, is GearSwap's unchanged. See
+  [Exporting your items](README.md#exporting-your-items).
 
 ---
 

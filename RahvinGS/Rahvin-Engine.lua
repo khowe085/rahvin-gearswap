@@ -79,6 +79,7 @@ do
     construct(include('RahvinGS/monitor'), 'RahvinGS/monitor')             -- section 19
     construct(include('RahvinGS/display'), 'RahvinGS/display')             -- section 20
     construct(include('RahvinGS/commands'), 'RahvinGS/commands')           -- section 21
+    construct(include('RahvinGS/export'), 'RahvinGS/export')               -- //gs export all by bag
     construct(include('RahvinGS/lifecycle'), 'RahvinGS/lifecycle')         -- section 22
 
     -- The exports the code below reads directly. Everything else it uses is a global a

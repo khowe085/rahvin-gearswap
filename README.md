@@ -933,6 +933,23 @@ These answer questions about what the engine is doing. All are safe to run at an
 
 Each of the four switches is saved in the character's settings file, so a channel you turn off stays off after a reload until you turn it back on.
 
+### Exporting your items
+
+GearSwap's `//gs export all` writes everything you own to `data/export/`. With this engine loaded, the export is grouped by bag, so the file shows where each item is:
+
+```lua
+sets.exported = {
+    inventory = {
+        item="Echo Drops",
+    },
+    wardrobe3 = {
+        left_ear={ name="Chev. Earring", augments={'Accuracy+6','Mag. Acc.+6',}},
+    },
+}
+```
+
+Bags with nothing to export are left out. GearSwap's options still apply: `onlyaugs`, `noaugs`, `name <set>`, `file <name>`, `mainjob`, `mainsubjob`, `overwrite`, `mini` and `c` (clipboard). Every other export, and `all` with `compact` or `bgwiki`, is GearSwap's own, and GearSwap's export comes back unchanged when the job file unloads.
+
 **Every action names the set it used.** With `info` on, every action gets one line, pet actions and gear worn for an incoming spell included:
 
 ```
