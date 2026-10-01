@@ -376,6 +376,7 @@ return function(E)
     local command_takes_arg = {
         ["abysseaproc"] = true,
         ["aptitude"] = true,
+        ["autobuff"] = true,
         ["autows"] = true,
         ["autowsbuff"] = true,
         ["capacity"] = true,
@@ -694,6 +695,20 @@ return function(E)
             return true
         end
         notice('Auto WS Buff: [' .. state.AutoWSBuff.value .. ']')
+        return true
+    end
+
+    -- The auto buff. No default key. The same shape as the auto weaponskill above, with the
+    -- options brought up to date from AutoBuff_List first.
+    command_handlers["autobuff"] = function(cmd, command)
+        if autobuff_sync() then invalidate_layout() end
+        if command == "autobuff" then
+            state.AutoBuff:cycle()
+        elseif not set_mode_arg(state.AutoBuff, 'Auto Buff', 'AutoBuff', command_arg(cmd)) then
+            return true
+        end
+        notice('Auto Buff: [' .. state.AutoBuff.value .. ']')
+        display_box_update()
         return true
     end
 
@@ -1378,6 +1393,7 @@ return function(E)
         { word = 'spellreceived',  group = 'modes',       args = '[<mode>]',                 purpose = 'cycle spell-received gear tracking, or set it by name' },
         { word = 'autows',         group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the auto weaponskill for the current weapon, or set it by name' },
         { word = 'autowsbuff',     group = 'modes',       args = '[ON|OFF]',                 purpose = 'toggle the buff used before each weaponskill, or set it' },
+        { word = 'autobuff',       group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the auto buff list, or set it by name' },
         { word = 'display',        group = 'display',     args = '[on|off]',                 purpose = 'show or hide the status box' },
         { word = 'displaymode',    group = 'display',     args = '[on|off]',                 purpose = 'switch the mode box between one line and several' },
         { word = 'displaystyle',   group = 'display',     args = '[<style>]',                purpose = 'cycle the renderer that draws the box, or choose one by name' },

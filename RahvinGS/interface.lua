@@ -425,6 +425,13 @@ state.AutoWSBuff = M { ['description'] = 'Auto WS Buff' }
 state.AutoWSBuff:options('ON', 'OFF')
 state.AutoWSBuff:set('ON')
 
+-- The auto buff. OFF, then one option per list in AutoBuff_List, in name order, or OFF and
+-- ON when it is a single list. The engine builds the options itself, so a job file never
+-- calls :options() on it. Change it with gs c autobuff.
+state.AutoBuff = M { ['description'] = 'Auto Buff' }
+state.AutoBuff:options('OFF')
+state.AutoBuff:set('OFF')
+
 -- The ranged ammunition type. The engine reads it only to find the standard round a
 -- weaponskill may finish on once its own has run out. A job file carrying more than one
 -- ranged type reads it to fill the flat Ammo keys below.
@@ -487,6 +494,26 @@ Lockstyle_List = {}
 --       Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
 --   }
 AutoWS_List = {}
+
+-- The auto buff lists, keyed by name. Each name becomes a state.AutoBuff option, and while
+-- it is chosen the engine keeps that list's buffs on you, casting or using the first one
+-- missing, in list order, on <me>. Each entry is a table:
+--   Name  the spell or job ability, as the game spells it. Required.
+--   Buff  the buff it keeps up. Optional: left out, it is the status the game lists for the
+--         action, as Haste for Haste II. Give it where that is missing or wrong.
+--   When  Always (the default), Engaged, Idle, Combat or OutOfCombat.
+-- A flat list of entries, with no names, offers OFF and ON.
+--   AutoBuff_List = {
+--       Melee = {
+--           { Name = 'Haste II',    Buff = 'Haste' },
+--           { Name = 'Temper II',   Buff = 'Multi Strikes', When = 'Engaged' },
+--       },
+--       Mage  = {
+--           { Name = 'Refresh III', Buff = 'Refresh' },
+--           { Name = 'Stoneskin',   When = 'Idle' },
+--       },
+--   }
+AutoBuff_List = {}
 
 -- Layer the weapon set named by the current JobMode value onto a set the caller is building,
 -- and return the result. A helper for job files: nothing in the engine calls it, and some

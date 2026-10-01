@@ -661,6 +661,32 @@ Before each weaponskill, uses one ready buff in its place, then sends the weapon
 - It applies to weaponskills from AutoWS as well as ones you use yourself.
 - Only a weaponskill aimed at `<t>` is buffed. One from the game menu, or at any other target, goes off as usual with no buff, so the second send can never land on a different mob.
 
+### AutoBuff
+
+Keeps a list of buffs on you. While a list is chosen, the engine casts or uses the first buff in it that you are missing, on yourself, one at a time.
+
+- **Options:** `OFF`, then one per list in `AutoBuff_List`, in name order. A single unnamed list offers `OFF` and `ON`.
+- **Set them in your job file:**
+  ```lua
+  AutoBuff_List = {
+      Melee = {
+          { Name = 'Haste II',  Buff = 'Haste' },
+          { Name = 'Temper II', Buff = 'Multi Strikes', When = 'Engaged' },
+          { Name = 'Berserk',   When = 'Combat' },
+      },
+      Mage = {
+          { Name = 'Refresh III', Buff = 'Refresh' },
+          { Name = 'Stoneskin',   When = 'Idle' },
+      },
+  }
+  ```
+- **Command:** `//gs c AutoBuff`, or `//gs c AutoBuff Melee` · **Default key:** none. Bind one yourself with Windower, for example `//bind !f8 gs c AutoBuff`
+- `Name` is a spell or a job ability, spelled as the game spells it. `Buff` is the buff it keeps up; leave it out and the game's own status for the action is used, so give it where the two differ, as `Temper II` grants `Multi Strikes`. `When` is `Always` (the default), `Engaged`, `Idle`, `Combat` or `OutOfCombat`.
+- An entry is skipped while you cannot use it: not learned, above your level, on cooldown, short of MP or TP, silenced for a spell, under Amnesia for a job ability, or moving for a spell. An entry naming nothing the game knows is reported once in chat and then skipped.
+- It checks once a second and waits after each buff it sends. It does nothing in a city, while mounted or invisible, while another action is in progress, or under Sleep, Stun, Petrification, Terror or Charm.
+- The action goes through the ordinary precast, so its gear and its checks are the same as for one you type.
+- The status box shows it as `ABF` once your job file lists any entries.
+
 ### JobMode and JobMode2
 
 Two free-form modes for anything a job needs. The engine tracks the value and shows it; what it *means* is up to your job file. Left alone, both offer `OFF` and `ON`.
@@ -752,6 +778,7 @@ A partial value is offered as a suggestion but never accepted, so `//gs c Treasu
 | `gs c Hoxne [OFF\|ON-Allow Critical\|ON-Locked]` | Cycle, or set the Hoxne Ampulla hold |
 | `gs c AutoWS [mode]` | Cycle, or jump to an auto weaponskill choice for the current weapon |
 | `gs c AutoWSBuff [ON\|OFF]` | Toggle, or set the buff used before each weaponskill |
+| `gs c AutoBuff [mode]` | Cycle, or jump to an auto buff list |
 | `gs c JobMode [mode]` | Cycle, or jump to a job-specific mode |
 | `gs c JobMode2 [mode]` | Cycle, or jump to a second job-specific mode |
 
@@ -1198,6 +1225,7 @@ Apply them by calling `jobsetup(LockStylePallet, MacroBook, MacroSet)` once, out
 |---|---|---|---|
 | `AutoItem` | boolean | `false` | Use a Remedy and a Holy Water automatically for status ailments |
 | `AutoWS_List` | table | `{}` | Auto weaponskill choices per weapon mode, each `{ weaponskill, TP }`, where TP is a number, `'AM2'` or `'AM3'` — see [AutoWS](#autows) |
+| `AutoBuff_List` | table | `{}` | Auto buff lists by name, each a list of `{ Name, Buff, When }` entries — see [AutoBuff](#autobuff) |
 | `Food` | string | — | Item used by `//gs c food` — `"Sublime Sushi"` |
 | `Ammo_Warning_Limit` | number | `99` | Warn on precast when your ranged ammunition falls to this count or below |
 | `UI_Name` | string | `''` | Name used for JobMode in chat and on the box; empty hides the mode |

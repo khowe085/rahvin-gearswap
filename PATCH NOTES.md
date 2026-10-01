@@ -61,6 +61,12 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   engine and your job file choose for a spell, ability or weaponskill, without using it.
   The job file then switches off for 30 seconds so you can inspect the gear. See
   [Testing your sets](README.md#testing-your-sets).
+- **AutoBuff.** A new mode, `gs c AutoBuff`, keeps a list of buffs on you, casting or
+  using the first one missing on yourself. Name the lists in your job file as
+  `AutoBuff_List`, each entry a spell or job ability with an optional `Buff` and `When`
+  (`Always`, `Engaged`, `Idle`, `Combat`, `OutOfCombat`). Ported from the old suite's
+  `AutoBuffMode`. It has no default key and shows on the status box as `ABF`. See
+  [AutoBuff](README.md#autobuff).
 
 ---
 
