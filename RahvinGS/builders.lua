@@ -710,10 +710,11 @@ return function(E)
         -- Treasure Hunter gear goes on for an action against an untagged monster. White,
         -- black and blue magic, Trusts, songs and ninjutsu are left out, because they do not
         -- tag at precast. The midcast build dresses them when their tag lands. A job file
-        -- that declares TH_Whitelist limits it to the actions on that list.
+        -- that declares TH_Whitelist limits it to the actions on that list, plus ranged
+        -- attacks, which always qualify.
         if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id]
             and not (spell.type:endswith('Magic') or spell.type == 'Trust' or spell.type == 'BardSong' or spell.skill == 'Ninjutsu')
-            and (not TH_Whitelist or TH_Whitelist:contains(spell.english)) then
+            and (not TH_Whitelist or spell.english == 'Ranged' or TH_Whitelist:contains(spell.english)) then
             if sets.TreasureHunter then
                 merge_report(built_set, sets.TreasureHunter)
                 info('[' .. spell.english .. '] Set with Treasure Hunter')
@@ -1197,9 +1198,10 @@ return function(E)
         end
         -- Treasure Hunter, with a looser test than precast's: an untagged monster target and
         -- a set to wear. This is where a spell's Treasure Hunter gear goes on. A job file
-        -- that declares TH_Whitelist limits it to the spells on that list.
+        -- that declares TH_Whitelist limits it to the actions on that list, plus ranged
+        -- attacks, which always qualify.
         if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id] and sets.TreasureHunter
-            and (not TH_Whitelist or TH_Whitelist:contains(spell.english)) then
+            and (not TH_Whitelist or spell.english == 'Ranged' or TH_Whitelist:contains(spell.english)) then
             merge_report(built_set, sets.TreasureHunter)
             info('[' .. spell.english .. '] Set with Treasure Hunter')
         end

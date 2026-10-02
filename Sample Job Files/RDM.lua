@@ -25,9 +25,9 @@ Food = "Tropical Crepe"
 state.OffenseMode:options('TP', 'ACC', 'DT', 'PDL', 'SB', 'MEVA', 'CRIT', 'Enspell')
 state.OffenseMode:set('DT')
 
--- The spells, job abilities and weaponskills that wear sets.TreasureHunter against an untagged monster. In Tag mode
--- nothing else wears it, melee included, and an action off the list does not count as tagging. Delete the line to
--- let every action tag.
+-- The spells, job abilities and weaponskills that wear sets.TreasureHunter against an untagged monster, along with
+-- every ranged attack. In Tag mode nothing else wears it, melee included, and an action off the list does not count
+-- as tagging. Delete the line to let every action tag.
 TH_Whitelist = S { 'Dia', 'Dia II', 'Dia III', 'Stonega' }
 
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.

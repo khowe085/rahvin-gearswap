@@ -284,8 +284,9 @@ return function(E)
                 -- only has its stamp refreshed, and only when it is already in the table.
                 --
                 -- When the job file declares TH_Whitelist, only an action that wore Treasure
-                -- Hunter gear adds a tag: a spell, weaponskill or job ability on the list, or
-                -- a melee swing outside Tag mode, where the engaged set carries the gear.
+                -- Hunter gear adds a tag: a spell, weaponskill or job ability on the list, a
+                -- ranged attack, or a melee swing outside Tag mode, where the engaged set
+                -- carries the gear.
                 -- Anything else only refreshes a tag already held.
                 if state.TreasureMode.value ~= 'None' and TaggingCategories:contains(data.category) then
                     local target = data.targets[1]
@@ -296,7 +297,7 @@ return function(E)
                             tags = state.TreasureMode.value ~= 'Tag'
                         else
                             local name = whitelist_name(data.category, data.param)
-                            tags = name ~= nil and TH_Whitelist:contains(name)
+                            tags = name == 'Ranged' or (name ~= nil and TH_Whitelist:contains(name))
                         end
                     end
                     if tags and target_mob and target_mob.is_npc then
