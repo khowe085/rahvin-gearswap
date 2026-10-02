@@ -21,6 +21,8 @@ UI_Name2 = ''
 -- Weapon modes. Each one needs a sets.Weapons['<Mode>'] of the same name below.
 state.WeaponMode:options('Burtgang','Naegling','Club','Shining One')
 state.WeaponMode:set('Burtgang')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Called once at load, below, to pick the macro set for the subjob. With any subjob but RUN it
 -- also selects DT mode, and with BLU it loads the tanking spell set through the AzureSets addon.

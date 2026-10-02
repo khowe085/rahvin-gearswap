@@ -34,6 +34,8 @@ state.OffenseMode:set('DT')
 -- Weapon modes. Each one needs a sets.Weapons['<Mode>'] of the same name below.
 state.WeaponMode:options('God Hands','Pole','Club')
 state.WeaponMode:set('God Hands')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.
 jobsetup (LockStylePallet,MacroBook,MacroSet)

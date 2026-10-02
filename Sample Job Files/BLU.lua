@@ -82,6 +82,8 @@ BlueACC = S { '1000 Needles', 'Absolute Terror', 'Auroral Drape', 'Awful Eye',
 -- Weapon modes. Each name needs a matching sets.Weapons entry.
 state.WeaponMode:options('Almace','Naegling','Black Halo','Cleave')
 state.WeaponMode:set('Almace')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Naming JobMode shows it in chat and on the status box.
 UI_Name = 'Mode'

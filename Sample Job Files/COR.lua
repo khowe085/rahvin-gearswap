@@ -27,6 +27,8 @@ state.OffenseMode:set('TP')
 -- Weapon modes. Each name needs a matching sets.Weapons entry.
 state.WeaponMode:options('Fomalhaut', 'Death Penalty', 'Savage Blade', 'Aeolian Edge', 'Evisceration')
 state.WeaponMode:set('Death Penalty')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged, or 'Locked+R' to hold range too.
+state.WeaponLock:set('Locked')
 
 -- Naming JobMode shows it in chat and on the status box.
 UI_Name = 'TP Mode'

@@ -581,14 +581,14 @@ Whether anything but the weapon mode may change main and sub. The mode says what
 
 | Value | Behavior |
 |---|---|
-| `Unlocked` | Any set may change main and sub, except during a weaponskill |
+| `Unlocked` | Out of combat, any set may change main and sub, except during a weaponskill. While engaged, holds as `Locked` |
 | `Locked` | `sets.Weapons[<mode>]` is the only thing that changes main and sub, in every phase |
 | `Songs` | Bard only — `Locked`, except for a song aimed at yourself, another player or a Trust |
 | `Locked+R` | Corsair only — holds range with main and sub |
 | `Geomancy` | Geomancer only — `Locked`, except for a Geomancy spell, whose set's main and sub swap in for the cast |
 
 - **Command:** `//gs c weaponlock Locked` · **Default key:** <kbd>Alt</kbd>+<kbd>F9</kbd>
-- **The engine fixes this list per job and a job file never redeclares it** — a job file's own `:options()` call wipes it. Every job starts `Locked`. To boot unlocked, call `state.WeaponLock:set('Unlocked')` and nothing else.
+- **The engine fixes this list per job and a job file never redeclares it** — a job file's own `:options()` call wipes it. Your job file picks the value it loads in with `state.WeaponLock:set('Locked')` (or any value its job offers); every sample file sets it right under its weapon mode. A file that sets nothing starts `Locked`.
 - `Locked+R` is refused while a Hoxne mode is on, because the Hoxne hold outranks the weapon lock on range: `Weapon Lock: [Locked+R] refused; Hoxne Ampulla holds range.` Asked for by name, the lock stays where it was; while cycling, `Locked+R` is skipped.
 - Whatever the value, a weaponskill never changes main or sub — see [Weaponskills](#weaponskills). The full behavior is under [The weapon lock](#the-weapon-lock).
 

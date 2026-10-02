@@ -72,9 +72,12 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   in `Full Time`, every other job in `None`).
 - **SpellReceived defaults to `OFF`.** Turn it on with `gs c SpellReceived ON` or
   Ctrl+F9.
-- **WeaponLock defaults to `Locked`.** Every job now starts with the weapon mode as the
-  only writer of main and sub. Unlock with `gs c weaponlock Unlocked` or Alt+F9, or call
-  `state.WeaponLock:set('Unlocked')` in a job file to boot unlocked.
+- **Your job file sets the starting WeaponLock.** Every sample file now calls
+  `state.WeaponLock:set('Locked')` under its weapon mode; change it to `'Unlocked'` (or
+  `Songs`, `Locked+R`, `Geomancy` on BRD, COR, GEO) to load that way. A file that sets
+  nothing starts `Locked`. Change it in game with `gs c weaponlock` or Alt+F9.
+- **`Unlocked` holds as `Locked` while engaged.** Out of combat, casting sets may still
+  swap main and sub; while engaged they cannot, so a cast mid-fight does not cost TP.
 - **New default keys.** F10 Stance (OffenseMode), F11 AutoWS, F12 AutoBuff, Alt+F9 Weapon
   Lock, Alt+F11 Treasure Hunter. F9 Weapon Mode and the Ctrl keys are unchanged. A
   settings file keeps the keys it already holds, and a clash leaves the later mode

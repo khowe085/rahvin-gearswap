@@ -27,6 +27,8 @@ state.OffenseMode:set('DT')
 -- Weapon modes. Each name needs a matching sets.Weapons entry.
 state.WeaponMode:options('Nuke','Mpaca')
 state.WeaponMode:set('Nuke')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.
 jobsetup (LockStylePallet,MacroBook,MacroSet)

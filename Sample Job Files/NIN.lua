@@ -30,6 +30,8 @@ state.OffenseMode:set('DT')
 -- Weapon modes. Each one needs a sets.Weapons['<Mode>'] of the same name below.
 state.WeaponMode:options('Kannagi','Savage Blade','Karambit','Aeolian Edge','Abyssea','Ninjitsu')
 state.WeaponMode:set('Kannagi')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Not read by the engine. Its own Elemental_WS list already holds these weaponskills.
 elemental_ws = S{'Aeolian Edge', 'Blade: Teki', 'Blade: To','Blade: Chi','Blade: Ei','Blade: Yu'}

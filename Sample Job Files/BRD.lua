@@ -14,6 +14,8 @@ Food = "Tropical Crepe"
 state.WeaponMode:options('Mordant Rime', 'Aeolian Edge', 'Shining Strike', 'Shining Blade', 'Savage Blade',
 	'Evisceration', 'Rudra\'s Storm', 'Staff')
 state.WeaponMode:set('Mordant Rime')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged, or 'Songs' to let friendly songs swap them.
+state.WeaponLock:set('Locked')
 
 -- Offense modes. TP, ACC and DT are the engine's defaults, and more can be added. Each mode picks its own engaged, idle and weaponskill sets, so each one offered needs a sets.OffenseMode.<Mode> and a sets.Idle.<Mode> below.
 state.OffenseMode:options('TP', 'ACC', 'DT', 'PDL', 'SB', 'MEVA', 'CRIT')

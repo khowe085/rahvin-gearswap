@@ -27,6 +27,8 @@ state.OffenseMode:set('DT')
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.
 state.WeaponMode:options('Aeneas','Naegling','Evisceration')
 state.WeaponMode:set('Aeneas')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.
 jobsetup (LockStylePallet,MacroBook,MacroSet)

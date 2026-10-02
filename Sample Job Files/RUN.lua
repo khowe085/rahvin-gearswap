@@ -42,6 +42,8 @@ MacroSet = Macro_Sub_Job()
 -- Weapon modes. Each name needs a matching sets.Weapons entry below.
 state.WeaponMode:options('Epeolatry','Naegling','Club','Great Axe','Axe')
 state.WeaponMode:set('Epeolatry')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Job-specific mode slots. Name one with UI_Name or UI_Name2 to show it in chat and on the status box.
 UI_Name = ''

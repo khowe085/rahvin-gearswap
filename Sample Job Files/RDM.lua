@@ -37,6 +37,8 @@ jobsetup(LockStylePallet, MacroBook, MacroSet)
 state.WeaponMode:options('Seraph Blade', 'Sanguine Blade', 'Chant du Cygne', 'Savage Blade', 'Evisceration',
 	'Aeolian Edge', 'Black Halo', 'Ullr', 'Crocea')
 state.WeaponMode:set('Sanguine Blade')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Goal 2100 hp and 1300 MP
 function get_sets()

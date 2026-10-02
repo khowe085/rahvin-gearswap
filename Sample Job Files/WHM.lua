@@ -32,6 +32,8 @@ Organizer = false
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.
 state.WeaponMode:options('Seraph Strike','Black Halo','Asclepius','Mpaca')
 state.WeaponMode:set('Mpaca')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.
 jobsetup (LockStylePallet,MacroBook,MacroSet)

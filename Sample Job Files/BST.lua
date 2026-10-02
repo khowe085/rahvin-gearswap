@@ -33,6 +33,8 @@ state.OffenseMode:set('DT')
 -- Weapon modes. Each name needs a matching sets.Weapons entry.
 state.WeaponMode:options('Decimation','Pangu')
 state.WeaponMode:set('Decimation')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 -- Naming JobMode shows it in chat and on the status box.
 UI_Name = 'Pet'

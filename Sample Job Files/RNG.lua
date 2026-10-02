@@ -32,6 +32,8 @@ state.OffenseMode:set('TP')
 state.WeaponMode:options('Fomalhaut', 'Annihilator', 'Gastraphetes', 'Fail-Not', 'Yoichinoyumi', 'Naegling', 'Tauret',
 	'Dolichenus')
 state.WeaponMode:set('Fomalhaut')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 state.RAMode:set('Bullet')
 
 -- The name shown for JobMode in chat and on the status box. Leaving it empty hides the mode.

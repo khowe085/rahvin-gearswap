@@ -30,6 +30,8 @@ jobsetup(LockStylePallet, MacroBook, MacroSet)
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.
 state.WeaponMode:options('Musa', 'Mpaca')
 state.WeaponMode:set('Mpaca')
+-- Weapon lock at load. 'Locked' always holds the weapon mode's weapons, 'Unlocked' holds them only while engaged.
+state.WeaponLock:set('Locked')
 
 function get_sets()
 	-- One weapon set per weapon mode, keyed by the mode's name.
