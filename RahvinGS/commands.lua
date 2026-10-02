@@ -56,8 +56,8 @@
 --          the gear rebuild, and then return true, so it runs once. Changing which commands
 --          reach the hook changes job-file behavior with no error anywhere. The shipped RNG
 --          file calls its ammunition routine from that hook on every command that reaches it.
--- EXPORTS  native_disable_notice and test_hold_watch, which the root registers on the addon
---          command event, test_hold_clear, which lifecycle.lua calls at unload, and
+-- EXPORTS  native_disable_notice, short_word and test_hold_watch, which the root
+--          registers on the addon command event, test_hold_clear, which lifecycle.lua calls at unload, and
 --          the keybind functions keybind_apply, keybind_release and keybind_list, which
 --          lifecycle.lua calls at load and unload. The mode table keybind_modes, the key
 --          registry keybinds_bound and the keyspec grammar are exported beside them:
@@ -1926,11 +1926,27 @@ return function(E)
         if slots then windower.send_command('gs c ' .. verb .. ' ' .. slots) end
     end
 
-    -- The exports. The root registers native_disable_notice, and lifecycle.lua binds the keys
+    -- Short words typed after '//gs', each sent on as the longer command: 'gs d' as GearSwap's
+    -- own 'gs disable', which native_disable_notice then brings into the disable hold, and
+    -- 'gs t' as 'gs c test'. GearSwap knows neither word and answers it first. Registered
+    -- raw by the root, so 'gs t' still works while a test hold has the job file off; the
+    -- 'gs c test' it sends is then the one test_hold_watch releases the hold for. The rest
+    -- of the line goes along as typed, and a bare word sends the bare command.
+    local SHORT_WORDS = { d = 'gs disable', t = 'gs c test' }
+    local function short_word(first, ...)
+        if type(first) ~= 'string' then return end
+        local target = SHORT_WORDS[first:lower()]
+        if not target then return end
+        local rest = table.concat({ ... }, ' ')
+        windower.send_command(rest ~= '' and (target .. ' ' .. rest) or target)
+    end
+
+    -- The exports. The root registers native_disable_notice and short_word, and lifecycle.lua binds the keys
     -- at load and releases them at unload through the three keybind functions. The mode
     -- table, the key registry and the keyspec grammar are exported beside them. Every command
     -- in this file is reached through self_command, which GearSwap looks up by name.
     E.native_disable_notice = native_disable_notice
+    E.short_word = short_word
     E.keybind_modes = keybind_modes
     E.keybinds_bound = bound
     E.keybind_apply = keybind_apply
