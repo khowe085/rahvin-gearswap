@@ -339,7 +339,7 @@ state.OffenseMode:set('TP')
 -- failsafe delay releases them when no completion arrives.
 state.SpellReceived = M { ['description'] = "Spell-Received" }
 state.SpellReceived:options('OFF', 'ON')
-state.SpellReceived:set('ON')
+state.SpellReceived:set('OFF')
 
 -- The Hoxne Ampulla hold. ON-Locked keeps range and ammo outright, so nothing else may enter
 -- either. ON-Allow Critical holds them the same way, but stands aside for the four actions
@@ -350,16 +350,14 @@ state.Hoxne = M { ['description'] = 'Hoxne' }
 state.Hoxne:options('OFF', 'ON-Allow Critical', 'ON-Locked')
 state.Hoxne:set('OFF')
 
--- Treasure Hunter handling. Only Thief gets the SATA option, and only Thief defaults to Full
--- Time. Every other job defaults to None.
+-- Treasure Hunter handling. Only Thief gets the SATA option. Every job defaults to Tag.
 state.TreasureMode = M { ['description'] = 'Treasure Mode' }
 if player.main_job == "THF" then
     state.TreasureMode:options('None', 'Tag', 'Full Time', 'SATA')
-    state.TreasureMode:set('Full Time')
 else
     state.TreasureMode:options('None', 'Tag', 'Full Time')
-    state.TreasureMode:set('None')
 end
+state.TreasureMode:set('Tag')
 
 -- Which weapon set to wear. The option list is the job file's own, and each name needs a
 -- matching sets.Weapons entry. Two names are special. 'Locked' and 'Unlocked' name no set of
@@ -379,8 +377,8 @@ state.WeaponMode:set('OFF')
 --   Geomancy   (Geomancer) Locked, except for a Geomancy spell, whose set may change main
 --              and sub.
 -- The engine fixes this list per job, and a job file never redeclares it, because its own
--- :options() call would wipe the list. A job file that wants to start locked calls
--- state.WeaponLock:set('Locked') and nothing else. A value its job's list does not offer
+-- :options() call would wipe the list. Every job starts Locked. A job file that wants to
+-- start unlocked calls state.WeaponLock:set('Unlocked') and nothing else. A value its job's list does not offer
 -- raises at load. The equip component resolves the value into four flags at startup and on
 -- every change, and every build path reads those flags rather than this mode.
 state.WeaponLock = M { ['description'] = 'Weapon Lock' }
@@ -393,7 +391,7 @@ elseif player.main_job == "GEO" then
 else
     state.WeaponLock:options('Unlocked', 'Locked')
 end
-state.WeaponLock:set('Unlocked')
+state.WeaponLock:set('Locked')
 
 -- Two free-form mode slots for anything a job needs. The engine shows each value and reads
 -- JobMode in three places. Job_Mode_Check dresses sets.Weapons by it, the two jug-pet calls
@@ -409,6 +407,28 @@ state.JobMode2 = {}
 state.JobMode2 = M { ['description'] = 'Job Specific Mode' }
 state.JobMode2:options('OFF', 'ON')
 state.JobMode2:set('OFF')
+
+-- The auto weaponskill. OFF, then one option per AutoWS_List entry for the current weapon
+-- mode, labeled with the weaponskill and its TP. The engine builds the list itself and
+-- rebuilds it, back to OFF, whenever the weapon mode changes, so a job file never calls
+-- :options() on it. Change it with gs c autows.
+state.AutoWS = M { ['description'] = 'Auto Weaponskill' }
+state.AutoWS:options('OFF')
+state.AutoWS:set('OFF')
+
+-- The auto weaponskill buff. While ON, a weaponskill first uses one ready buff (Last Resort
+-- as DRK or /DRK, then Berserk, Warcry, Aggressor as WAR or /WAR), and is sent again 1.1
+-- seconds later. Weaponskill presses in between are dropped. Change it with gs c autowsbuff.
+state.AutoWSBuff = M { ['description'] = 'Auto WS Buff' }
+state.AutoWSBuff:options('ON', 'OFF')
+state.AutoWSBuff:set('ON')
+
+-- The auto buff. OFF, then one option per list in AutoBuff_List, in name order, or OFF and
+-- ON when it is a single list. The engine builds the options itself, so a job file never
+-- calls :options() on it. Change it with gs c autobuff.
+state.AutoBuff = M { ['description'] = 'Auto Buff' }
+state.AutoBuff:options('OFF')
+state.AutoBuff:set('OFF')
 
 -- The ranged ammunition type. The engine reads it only to find the standard round a
 -- weaponskill may finish on once its own has run out. A job file carrying more than one
@@ -460,6 +480,38 @@ is_Busy = false
 AutoItem = false
 Random_Lockstyle = false
 Lockstyle_List = {}
+
+-- The auto weaponskill choices, keyed by weapon mode. Each entry is { weaponskill, TP }, and
+-- each becomes a state.AutoWS option while that weapon mode is current. While engaged with
+-- an option chosen, the weaponskill is used on your target as soon as TP reaches the number.
+-- 'AM2' or 'AM3' in place of a number builds that Aftermath level at 2000 or 3000 TP, then
+-- uses the weaponskill at 1000 while it, or a higher level, lasts. A weapon mode with no
+-- entry offers OFF alone.
+--   AutoWS_List = {
+--       Naegling = { { 'Savage Blade', 1000 }, { 'Savage Blade', 1750 } },
+--       Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
+--   }
+AutoWS_List = {}
+
+-- The auto buff lists, keyed by name. Each name becomes a state.AutoBuff option, and while
+-- it is chosen the engine keeps that list's buffs on you, casting or using the first one
+-- missing, in list order, on <me>. Each entry is a table:
+--   Name  the spell or job ability, as the game spells it. Required.
+--   Buff  the buff it keeps up. Optional: left out, it is the status the game lists for the
+--         action, as Haste for Haste II. Give it where that is missing or wrong.
+--   When  Always (the default), Engaged, Idle, Combat or OutOfCombat.
+-- A flat list of entries, with no names, offers OFF and ON.
+--   AutoBuff_List = {
+--       Melee = {
+--           { Name = 'Haste II',    Buff = 'Haste' },
+--           { Name = 'Temper II',   Buff = 'Multi Strikes', When = 'Engaged' },
+--       },
+--       Mage  = {
+--           { Name = 'Refresh III', Buff = 'Refresh' },
+--           { Name = 'Stoneskin',   When = 'Idle' },
+--       },
+--   }
+AutoBuff_List = {}
 
 -- Layer the weapon set named by the current JobMode value onto a set the caller is building,
 -- and return the result. A helper for job files: nothing in the engine calls it, and some

@@ -883,6 +883,25 @@ return function(E)
         return n and ('[' .. tostring(n) .. '] ') or ''
     end
 
+    -- The name of every layer in the current record that carried gear, in merge order and
+    -- once each, for gs c test to say what it put on. It reads the record, so it is called
+    -- before merge_report_flush, which empties it. A layer the record cannot name is listed
+    -- as an unnamed set.
+    local function merge_report_layers()
+        local names, seen = {}, {}
+        for i = 1, E.mr_count do
+            local t = mr_history[i]
+            if set_has_gear(t) then
+                local n = mr_name(i, t) or 'an unnamed set'
+                if not seen[n] then
+                    seen[n] = true
+                    names[#names + 1] = n
+                end
+            end
+        end
+        return names
+    end
+
     -- Report the finished build. The precast, midcast and aftercast hooks, and pet_midcast,
     -- call this after their build. The warning and the info line speak only for the phase
     -- that chose the action's final gear, and the gear report speaks for every phase.
@@ -1831,6 +1850,61 @@ return function(E)
         end
     end
 
+    -- GearSwap's own '//gs disable <slot>' and '//gs enable <slot>', brought into the disable
+    -- hold. GearSwap has already acted on the slot by the time this runs, so this only works
+    -- out what the hold's record should say, and returns the slot words for the gs c form
+    -- that says it, or nil when the record already agrees. The caller sends that command,
+    -- so the record changes and the freed slots are dressed inside a wrapped event.
+    --
+    -- Words that name no slot are dropped, since GearSwap has answered them already. A
+    -- disable takes every named slot, as gs c disable would. An enable releases only the
+    -- slots the hold has. Any other slot it freed that a layer below still claims is named
+    -- once per holder, because that layer takes the slot back at its next chance, and a free
+    -- slot nothing claims needs nothing.
+    local function disable_native(verb, words)
+        local canons, seen = {}, {}
+        local function add(canon)
+            if not seen[canon] then
+                seen[canon] = true
+                canons[#canons + 1] = canon
+            end
+        end
+        for _, word in ipairs(words) do
+            word = tostring(word):lower()
+            if word == 'all' then
+                for _, canon in ipairs(DISABLE_SLOTS) do add(canon) end
+            elseif CANON_SLOT[word] then
+                add(CANON_SLOT[word])
+            end
+        end
+        if #canons == 0 then return nil end
+        if verb == 'disable' then return table.concat(canons, ' ') end
+        local release, others, order = {}, {}, {}
+        for _, canon in ipairs(canons) do
+            if E.disabled_n > 0 and disabled[canon] then
+                release[#release + 1] = canon
+            else
+                local claim = slot_claim(canon)
+                if claim then
+                    if not others[claim] then
+                        others[claim] = {}
+                        order[#order + 1] = claim
+                    end
+                    others[claim][#others[claim] + 1] = canon
+                end
+            end
+        end
+        for _, claim in ipairs(order) do
+            local slots = others[claim]
+            notice(('%s: //gs enable freed %s, but %s holds %s and takes %s back.'):format(
+                DISABLE_LABEL, table.concat(slots, ', '),
+                HOLDER_NAME[claim] or 'an item lock', #slots > 1 and 'them' or 'it',
+                #slots > 1 and 'them' or 'it'))
+        end
+        if #release == 0 then return nil end
+        return table.concat(release, ' ')
+    end
+
     -- THE STRIP HOLD. gs c naked and its sibling words take every slot their shape names and
     -- hold it bare. It is third in the precedence stack, below an item use and a disable
     -- hold and above every other layer. The word selects the shape, and one hold stands at a
@@ -2410,6 +2484,7 @@ return function(E)
     E.merge_report = merge_report
     E.merge_named = merge_named
     E.merge_report_flush = merge_report_flush
+    E.merge_report_layers = merge_report_layers
     E.apply_buff_children = apply_buff_children
     E.set_roll_eleven = set_roll_eleven
     E.discover_buff_children = discover_buff_children
@@ -2444,6 +2519,7 @@ return function(E)
     E.verify_stripped_slots = verify_stripped_slots
     E.verify_disabled_slots = verify_disabled_slots
     E.disable_mode = disable_mode
+    E.disable_native = disable_native
     E.disable_clear = disable_clear
 
     -- The version stamp. The root checks it against Rahvin_GS, so a stale copy of this file

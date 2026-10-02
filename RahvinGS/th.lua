@@ -51,6 +51,25 @@ return function(E)
     local Divergence_Zones, res                           = E.Divergence_Zones, E.res
     local roll_action, roll_clear                         = E.roll_action, E.roll_clear
 
+    -- The name TH_Whitelist is checked against for each tagging category. A ranged attack
+    -- carries no action id, so it goes by 'Ranged', the name precast sees for it.
+    local function whitelist_name(category, param)
+        local source
+        if category == 2 then
+            return 'Ranged'
+        elseif category == 3 then
+            source = res.weapon_skills
+        elseif category == 4 then
+            source = res.spells
+        elseif category == 6 or category == 14 then
+            source = res.job_abilities
+        elseif category == 11 then
+            source = res.monster_abilities
+        end
+        local action = source and source[param]
+        return action and action.english
+    end
+
     ------------------------------------------------------------------------------------------------
     -- SECTION 18 - TREASURE HUNTER TRACKING
     ------------------------------------------------------------------------------------------------
@@ -196,8 +215,13 @@ return function(E)
     --      burst window.
     --   4. The eleven tracker, for every actor. Every job ability packet is handed to it,
     --      and a Corsair roll that lists this character carries its total there.
+    --
+    -- The guard is on type, not nil. A '//gs r' typed while the 'addon command' event is
+    -- dispatching unloads this file and loads it again inside that dispatch, and Windower
+    -- can hand the new registration a freed handler id, so the rest of the dispatch calls
+    -- this handler with the command's arguments, a string such as 'r'.
     E.th_action = function(data)
-        if data ~= nil then
+        if type(data) == 'table' then
             if data.actor_id == player.id then
                 -- Category 2: ranged attack finished.
                 if data.category == 2 then
@@ -258,10 +282,24 @@ return function(E)
                 -- mob already in the table is only restamped, because the build already reads
                 -- it as tagged. A target the mob lookup cannot find, or one that is not an NPC,
                 -- only has its stamp refreshed, and only when it is already in the table.
+                --
+                -- When the job file declares TH_Whitelist, only an action that wore Treasure
+                -- Hunter gear adds a tag: a spell, weaponskill or job ability on the list, or
+                -- a melee swing outside Tag mode, where the engaged set carries the gear.
+                -- Anything else only refreshes a tag already held.
                 if state.TreasureMode.value ~= 'None' and TaggingCategories:contains(data.category) then
                     local target = data.targets[1]
                     local target_mob = target and get_mob_by_id(target.id)
-                    if target_mob and target_mob.is_npc then
+                    local tags = true
+                    if TH_Whitelist then
+                        if data.category == 1 then
+                            tags = state.TreasureMode.value ~= 'Tag'
+                        else
+                            local name = whitelist_name(data.category, data.param)
+                            tags = name ~= nil and TH_Whitelist:contains(name)
+                        end
+                    end
+                    if tags and target_mob and target_mob.is_npc then
                         local first_tag = not th_info.tagged_mobs[target.id]
                         th_info.tagged_mobs[target.id] = os.clock()
                         if first_tag and state.TreasureMode.value ~= 'Full Time' then

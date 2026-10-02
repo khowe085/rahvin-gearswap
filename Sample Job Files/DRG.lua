@@ -20,7 +20,7 @@ Random_Lockstyle = false
 -- The lockstyle sets the random pick chooses from.
 Lockstyle_List = {1,2,6,12}
 
--- Not read by this engine.
+-- Not read by this engine. gs org works whatever this says; see README, Utility.
 Organizer = false
 
 -- Offense modes, and the one the file starts in. TP, ACC and DT are the engine's defaults, and more can be added.

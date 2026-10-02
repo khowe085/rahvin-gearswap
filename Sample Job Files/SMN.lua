@@ -23,7 +23,7 @@ Lockstyle_List = {1,2,6,12}
 -- The offense mode to start in. This file offers the engine's default modes, TP, ACC and DT.
 state.OffenseMode:set('DT')
 
--- Not read by this engine.
+-- Not read by this engine. gs org works whatever this says; see README, Utility.
 Organizer = true
 
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.

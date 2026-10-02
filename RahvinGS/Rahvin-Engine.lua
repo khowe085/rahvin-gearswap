@@ -19,6 +19,11 @@
 -- globals, and a job file overrides them after this file returns.
 include('RahvinGS/interface')
 
+-- GearSwap's bundled Organizer library. It adds one command, gs org, which gathers every item
+-- in sets (and in organizer_items, if a job file defines it) and has the Organizer addon fetch
+-- them into inventory and wardrobes. It does nothing until that command is typed.
+include('organizer-lib')
+
 ----------------------------------------------------------------------------------------------------
 -- COMPONENT: the composition root -- section 23: construction and event registration
 ----------------------------------------------------------------------------------------------------
@@ -74,6 +79,7 @@ do
     construct(include('RahvinGS/monitor'), 'RahvinGS/monitor')             -- section 19
     construct(include('RahvinGS/display'), 'RahvinGS/display')             -- section 20
     construct(include('RahvinGS/commands'), 'RahvinGS/commands')           -- section 21
+    construct(include('RahvinGS/export'), 'RahvinGS/export')               -- //gs export all by bag
     construct(include('RahvinGS/lifecycle'), 'RahvinGS/lifecycle')         -- section 22
 
     -- The exports the code below reads directly. Everything else it uses is a global a
@@ -127,6 +133,11 @@ do
     -- drops a Corsair roll from the eleven tracker.
     windower.register_event('lose buff', E.sr_lose_buff)
 
+    -- TP changed: the auto weaponskill uses the chosen weaponskill once TP reaches its
+    -- threshold. Registered wrapped, so player and buffactive are refreshed before it reads
+    -- them. It equips nothing itself, since the /ws it sends runs the ordinary precast.
+    windower.register_event('tp change', E.autows_tp_change)
+
     -- Logout: both display boxes come down, with whatever the renderer standing owns. The
     -- boxes are not rebuilt until after the next login, so without this they stay drawn over
     -- the character list. The handler also latches the display shut, which stops the
@@ -143,6 +154,10 @@ do
     -- wrapped, not raw. It fires once per typed command, and the wrapper holds the line back
     -- while the job file itself is switched off, when the engine has nothing to say.
     windower.register_event('addon command', E.native_disable_notice)
+
+    -- The same event for gs c test's hold, registered raw. The hold switches the job file
+    -- off, and a wrapped handler would be held back for exactly as long as the hold stands.
+    windower.raw_register_event('addon command', E.test_hold_watch)
 
     -- A worked example for a job file, commented out: reacting to a tell or to party chat.
     -- It registers nothing here.

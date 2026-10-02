@@ -20,10 +20,13 @@
 -- CONTENTS
 --   Section 19 - Automation and combat monitoring. The main polling engine and the
 --   movement detection inside it, the two weapon-trait checks, skillchain burst tracking,
---   buff cancellation, and the Escha temporary-item macro.
+--   buff cancellation, the auto weaponskill, the auto buff, and the Escha temporary-item
+--   macro.
 --
--- EXPORTS  Nothing onto E. Its functions are globals. It writes these fields the state
---          component declares: is_moving, DualWield and TwoHand, the three
+-- EXPORTS  autows_tp_change onto E, which the root registers on the tp change event. Its
+--          other functions are globals, autows_sync and autobuff_sync among them, which
+--          commands.lua and display.lua call. It writes these fields the state component
+--          declares: is_moving, DualWield and TwoHand, the three
 --          last_skillchain_* fields, and SpellCastTime, which it zeroes when a busy window
 --          expires.
 -- CALLERS  The root registers main_engine on the outgoing chunk event. th.lua calls
@@ -202,6 +205,241 @@ return function(E)
         E.TwoHand = name_is_two_handed(weapon_name)
     end
 
+    -- Auto weaponskill ----------------------------------------------------------------------------
+
+    -- The weapon mode and the AutoWS_List table the AutoWS options were last built from, and
+    -- the entry each option label stands for. Both are compared by value and identity, so a
+    -- weapon change or a job file replacing AutoWS_List rebuilds the options on the next sync.
+    local autows_weapon, autows_list_built
+    local autows_choices                      = {}
+    -- os.clock() time before which no other weaponskill is sent, so two TP changes in quick
+    -- succession cannot queue a second /ws behind the first.
+    local autows_next                         = 0
+
+    -- Rebuild state.AutoWS from AutoWS_List[<the current weapon mode>]: OFF, then one option
+    -- per entry, labeled with the weaponskill and its TP, as 'Savage Blade 1000'. An entry
+    -- missing either is left out. Rebuilding sets the mode back to OFF. Returns true when it
+    -- rebuilt, so a caller drawing the box knows the option widths changed.
+    function autows_sync()
+        local list = type(AutoWS_List) == 'table' and AutoWS_List or nil
+        if autows_weapon == state.WeaponMode.value and autows_list_built == list then
+            return false
+        end
+        autows_weapon = state.WeaponMode.value
+        autows_list_built = list
+        autows_choices = {}
+        local labels = { 'OFF' }
+        for _, choice in ipairs(list and list[autows_weapon] or {}) do
+            if type(choice) == 'table' and choice[1] and choice[2] then
+                local label = tostring(choice[1]) .. ' ' .. tostring(choice[2])
+                if not autows_choices[label] then
+                    labels[#labels + 1] = label
+                    autows_choices[label] = choice
+                end
+            end
+        end
+        state.AutoWS:options(unpack(labels))
+        state.AutoWS:set('OFF')
+        return true
+    end
+
+    -- The TP an option fires at. A number is used as given. 'AM2' or 'AM3' builds that
+    -- Aftermath level at 2000 or 3000 TP, then fires at 1000 while it, or a higher level,
+    -- lasts. Anything else never fires.
+    local function autows_threshold(tp)
+        local level = tonumber(tostring(tp):upper():match('^AM([23])$'))
+        if not level then return tonumber(tp) end
+        for held = level, 3 do
+            if buffactive['Aftermath: Lv.' .. held] then return 1000 end
+        end
+        return level * 1000
+    end
+
+    -- Send the chosen weaponskill at the battle target once TP reaches the option's
+    -- threshold. The root registers it, wrapped, on the tp change event, so player and
+    -- buffactive are current. A TP change that arrives while the weaponskill cannot be used
+    -- sends nothing, and the next one tries again. The weaponskill then runs the ordinary
+    -- precast, so its gear and every check there apply as they do to a typed /ws.
+    E.autows_tp_change = function(new_tp)
+        if state.AutoWS.value == 'OFF' then return end
+        autows_sync()
+        local choice = autows_choices[state.AutoWS.value]
+        if not choice then return end
+        local now = os.clock()
+        if now < autows_next or is_Busy or midaction() then return end
+        if not player or player.status ~= 'Engaged' then return end
+        local active_buffs = buffactive
+        if active_buffs['Amnesia'] or active_buffs['Sleep'] or active_buffs['Stun']
+            or active_buffs['Petrification'] or active_buffs['Terror'] or active_buffs['Charm'] then
+            return
+        end
+        local threshold = autows_threshold(choice[2])
+        local tp = new_tp or player.tp
+        if not threshold or not tp or tp < threshold then return end
+        local target = windower.ffxi.get_mob_by_target('t')
+        if not target or target.hpp == 0 then return end
+        autows_next = now + 2
+        windower.send_command('input /ws "' .. tostring(choice[1]) .. '" <t>')
+    end
+
+    -- Auto buff ---------------------------------------------------------------------------------
+
+    -- The AutoBuff_List table the AutoBuff options were last built from, compared by identity,
+    -- so a job file replacing it rebuilds the options on the next sync.
+    local autobuff_list_built
+    -- os.clock() time of the next check. Checks run once a second, and after a buff is sent
+    -- the next waits long enough for its precast to open the busy window.
+    local autobuff_next                       = 0
+    -- Each entry's resolved action, keyed by the entry table: the command prefix, the
+    -- resource row, and the buff name it keeps up, lowercased. false marks an entry that
+    -- names nothing usable, so it is warned about once and then skipped.
+    local autobuff_resolved                   = setmetatable({}, { __mode = 'k' })
+    -- The client's status numbers for idle and engaged.
+    local STATUS_IDLE, STATUS_ENGAGED         = 0, 1
+
+    -- The buff lists an AutoBuff_List holds, by option name. A flat list of entries is one
+    -- list named ON. A keyed table offers each key as an option.
+    local function autobuff_lists()
+        local list = type(AutoBuff_List) == 'table' and AutoBuff_List or nil
+        if not list or next(list) == nil then return nil end
+        if type(list[1]) == 'table' then return { ON = list } end
+        return list
+    end
+
+    -- Rebuild state.AutoBuff from AutoBuff_List: OFF, then one option per list, in name order.
+    -- The current option is kept when it survives the rebuild, and set back to OFF when it
+    -- does not. Returns true when it rebuilt, so a caller drawing the box knows the option
+    -- widths changed.
+    function autobuff_sync()
+        local list = type(AutoBuff_List) == 'table' and AutoBuff_List or nil
+        if autobuff_list_built == list then return false end
+        autobuff_list_built = list
+        local was = state.AutoBuff.value
+        local names = {}
+        for name, entries in pairs(autobuff_lists() or {}) do
+            if type(name) == 'string' and type(entries) == 'table' then names[#names + 1] = name end
+        end
+        table.sort(names)
+        local labels, keep = { 'OFF' }, false
+        for _, name in ipairs(names) do
+            labels[#labels + 1] = name
+            if name == was then keep = true end
+        end
+        state.AutoBuff:options(unpack(labels))
+        state.AutoBuff:set(keep and was or 'OFF')
+        return true
+    end
+
+    -- Resolve an entry to the spell or job ability it names, once. A spell is tried first,
+    -- then a job ability. The buff it keeps up is the entry's Buff, or, when that is left
+    -- out, the status the action itself grants.
+    local function autobuff_resolve(entry)
+        local known = autobuff_resolved[entry]
+        if known ~= nil then return known end
+        local name = entry.Name or entry[1]
+        local row, prefix = nil, nil
+        if type(name) == 'string' then
+            row = res.spells:with('en', name)
+            if row then
+                prefix = '/ma'
+            else
+                row = res.job_abilities:with('en', name)
+                if row then prefix = '/ja' end
+            end
+        end
+        local buff = entry.Buff or entry[2]
+        if not buff and row and row.status and res.buffs[row.status] then
+            buff = res.buffs[row.status].en
+        end
+        if not row or type(buff) ~= 'string' then
+            warn('AutoBuff: [' .. tostring(name) .. '] ' ..
+                (row and 'grants no buff it can track. Give it a Buff.' or 'is not a spell or job ability.'))
+            autobuff_resolved[entry] = false
+            return false
+        end
+        known = { prefix = prefix, row = row, name = row.en, buff = buff:lower() }
+        autobuff_resolved[entry] = known
+        return known
+    end
+
+    -- Whether an entry's When is met. Left out, it is Always.
+    local function autobuff_when(when, p)
+        if when == nil or when == 'Always' then return true end
+        if when == 'Engaged' then return p.status == STATUS_ENGAGED end
+        if when == 'Idle' then return p.status == STATUS_IDLE end
+        if when == 'Combat' then return p.in_combat == true end
+        if when == 'OutOfCombat' then return not p.in_combat end
+        return false
+    end
+
+    -- Whether the character can use the action now: it is learned and in reach of the job
+    -- levels, it is off cooldown, it can be paid for, and no ailment forbids it.
+    local function autobuff_usable(act, p, blocked)
+        local row = act.row
+        if act.prefix == '/ma' then
+            if blocked.magic or E.is_moving then return false end
+            local learned = windower.ffxi.get_spells()
+            if not learned or not learned[row.id] then return false end
+            local levels = row.levels or {}
+            local main_lv, sub_lv = levels[p.main_job_id], levels[p.sub_job_id]
+            if not ((main_lv and main_lv <= p.main_job_level)
+                    or (sub_lv and p.sub_job_level and sub_lv <= p.sub_job_level)) then
+                return false
+            end
+            if (row.mp_cost or 0) > p.vitals.mp then return false end
+            local recast = E.get_spell_recasts()[row.recast_id]
+            return recast ~= nil and recast == 0
+        end
+        if blocked.ability then return false end
+        local abilities = windower.ffxi.get_abilities()
+        if not abilities or not table.contains(abilities.job_abilities or {}, row.id) then return false end
+        if (row.tp_cost or 0) > p.vitals.tp then return false end
+        local recast = E.get_ability_recasts()[row.recast_id]
+        return recast == nil or recast == 0
+    end
+
+    -- Keep the chosen list's buffs up. Sends the first entry, in list order, whose buff is
+    -- missing, whose When is met and which can be used now, on the character. One action per
+    -- check. It waits while busy, mid-action, in a city, mounted, or under an ailment that
+    -- stops every action. The action then runs the ordinary precast, so its gear and every
+    -- check there apply as they do to a typed command.
+    local function autobuff_check(now)
+        if state.AutoBuff.value == 'OFF' or now < autobuff_next then return end
+        autobuff_next = now + 1
+        autobuff_sync()
+        local lists = autobuff_lists()
+        local entries = lists and lists[state.AutoBuff.value]
+        if type(entries) ~= 'table' or is_Busy or midaction() then return end
+        local p = windower.ffxi.get_player()
+        if not p or (p.status ~= STATUS_IDLE and p.status ~= STATUS_ENGAGED) then return end
+        local zone = res.zones[windower.ffxi.get_info().zone]
+        if zone and Cities:contains(zone.en) then return end
+        local active = {}
+        for _, id in ipairs(p.buffs or {}) do
+            local b = res.buffs[id]
+            if b then active[b.en:lower()] = true end
+        end
+        if active['mounted'] or active['sleep'] or active['stun'] or active['petrification']
+            or active['terror'] or active['charm'] or active['invisible'] then
+            return
+        end
+        local blocked = {
+            magic = active['silence'] or active['mute'] or active['omerta'],
+            ability = active['amnesia'] or active['impairment'],
+        }
+        for _, entry in ipairs(entries) do
+            if type(entry) == 'table' then
+                local act = autobuff_resolve(entry)
+                if act and not active[act.buff] and autobuff_when(entry.When, p)
+                    and autobuff_usable(act, p, blocked) then
+                    autobuff_next = now + 3
+                    windower.send_command('input ' .. act.prefix .. ' "' .. act.name .. '" <me>')
+                    return
+                end
+            end
+        end
+    end
+
     -- The main polling engine. The root registers it on the raw outgoing chunk event, and
     -- that has two consequences. It runs only when the client sends a packet, so it is not
     -- a reliable timer, and anything that must run on schedule belongs on prerender. And
@@ -297,6 +535,21 @@ return function(E)
             cleanup_tagged_mobs()
             UpdateTime1 = now
         end
+
+        -- A weapon mode a job file set from its own code, or an AutoWS_List it replaced,
+        -- rebuilds the AutoWS options here, and the box is redrawn for their new widths.
+        if autows_sync() then
+            invalidate_layout()
+            display_box_update()
+        end
+        -- The same for an AutoBuff_List the job file replaced.
+        if autobuff_sync() then
+            invalidate_layout()
+            display_box_update()
+        end
+
+        -- The auto buff, once a second at most.
+        autobuff_check(now)
 
         -- The job file's own periodic hook, every 2 seconds, and only when the job file
         -- defines one. Skipped while busy so it cannot fight an action for the gear slots.

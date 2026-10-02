@@ -319,12 +319,13 @@ return function(E)
                     -- Treasure Hunter.
                     apply_buff_children(built_set, sets.OffenseMode, 'sets.OffenseMode')
                     -- Treasure Hunter gear goes on while engaged in three cases. An untagged
-                    -- target always gets it, whatever the mode, since the next swing applies
-                    -- the tag. Otherwise it takes Full Time, or SATA with Sneak Attack, Trick
+                    -- target gets it, since the next swing applies the tag, except in Tag mode
+                    -- on a job that declares TH_Whitelist, where only a listed action wears
+                    -- it. Otherwise it takes Full Time, or SATA with Sneak Attack, Trick
                     -- Attack or Feint up.
                     if state.TreasureMode.value ~= 'None' then
                         if sets.TreasureHunter then
-                            if not th_info.tagged_mobs[player.target.id] then
+                            if not th_info.tagged_mobs[player.target.id] and not (TH_Whitelist and state.TreasureMode.value == 'Tag') then
                                 merge_report(built_set, sets.TreasureHunter)
                             elseif state.TreasureMode.value == 'Full Time' then
                                 merge_report(built_set, sets.TreasureHunter)
@@ -410,9 +411,10 @@ return function(E)
         -- stays on.
         if pet.isvalid and pet_midaction() then return end
         -- Idle is the floor under every branch, so a build that matches no branch still
-        -- dresses the character.
+        -- dresses the character. gs c test leaves it out, so a test shows only the gear the
+        -- action itself chose.
         local built_set = {}
-        if sets.Idle then merge_report(built_set, sets.Idle) end
+        if sets.Idle and not E.test_no_idle_floor then merge_report(built_set, sets.Idle) end
         merge_report_mark()
         if spell.type == 'WeaponSkill' then
             if sets.WS then
@@ -707,9 +709,11 @@ return function(E)
 
         -- Treasure Hunter gear goes on for an action against an untagged monster. White,
         -- black and blue magic, Trusts, songs and ninjutsu are left out, because they do not
-        -- tag at precast. The midcast build dresses them when their tag lands.
+        -- tag at precast. The midcast build dresses them when their tag lands. A job file
+        -- that declares TH_Whitelist limits it to the actions on that list.
         if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id]
-            and not (spell.type:endswith('Magic') or spell.type == 'Trust' or spell.type == 'BardSong' or spell.skill == 'Ninjutsu') then
+            and not (spell.type:endswith('Magic') or spell.type == 'Trust' or spell.type == 'BardSong' or spell.skill == 'Ninjutsu')
+            and (not TH_Whitelist or TH_Whitelist:contains(spell.english)) then
             if sets.TreasureHunter then
                 merge_report(built_set, sets.TreasureHunter)
                 info('[' .. spell.english .. '] Set with Treasure Hunter')
@@ -757,8 +761,9 @@ return function(E)
 
         local built_set = {}
         -- Idle, then sets.Midcast, form the floor, so a cast that matches no branch below
-        -- still comes out dressed rather than in its precast gear.
-        if sets.Idle then merge_report(built_set, sets.Idle) end
+        -- still comes out dressed rather than in its precast gear. gs c test leaves Idle out,
+        -- as precastequip does.
+        if sets.Idle and not E.test_no_idle_floor then merge_report(built_set, sets.Idle) end
         if sets.Midcast then
             merge_report(built_set, sets.Midcast)
             -- Spell interruption rate down, for every action except a ranged attack.
@@ -1191,8 +1196,10 @@ return function(E)
             end
         end
         -- Treasure Hunter, with a looser test than precast's: an untagged monster target and
-        -- a set to wear. This is where a spell's Treasure Hunter gear goes on.
-        if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id] and sets.TreasureHunter then
+        -- a set to wear. This is where a spell's Treasure Hunter gear goes on. A job file
+        -- that declares TH_Whitelist limits it to the spells on that list.
+        if state.TreasureMode.value ~= 'None' and spell.target.type == 'MONSTER' and not th_info.tagged_mobs[spell.target.id] and sets.TreasureHunter
+            and (not TH_Whitelist or TH_Whitelist:contains(spell.english)) then
             merge_report(built_set, sets.TreasureHunter)
             info('[' .. spell.english .. '] Set with Treasure Hunter')
         end
