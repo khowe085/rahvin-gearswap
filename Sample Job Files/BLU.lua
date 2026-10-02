@@ -587,8 +587,9 @@ end
 
 -- Called when the player's subjob changes.
 -- Here, it reloads the AzureSets spell set for the new subjob and the current job mode.
+-- It waits for the game to finish the change, because a main job change also fires this while this file is still loaded.
 function sub_job_change_custom(new, old)
-	load_azure_set(new)
+	coroutine.schedule(load_azure_set, 2)
 end
 
 -- Called before each action, after the engine's own checks. Cancel the action here with cancel_spell(). Nothing it returns is used.
@@ -660,8 +661,11 @@ end
 
 -- Loads the AzureSets spell set for the subjob and job mode: {sub}_mage in AoE mode, {sub}_melee in Melee mode.
 -- A missing {sub}_mage falls back to {sub}_melee, and a missing {sub}_melee falls back to nin_melee. Each miss is warned in chat.
-function load_azure_set(sub)
-	sub = (sub or player.sub_job or 'nin'):lower()
+-- It reads the job from the game, not GearSwap's player table, and does nothing unless the main job is BLU.
+function load_azure_set()
+	local current = windower.ffxi.get_player()
+	if not current or current.main_job ~= 'BLU' then return end
+	local sub = (current.sub_job or 'nin'):lower()
 	local candidates = {}
 	if state.JobMode.value == 'AoE' then candidates[#candidates+1] = sub .. '_mage' end
 	candidates[#candidates+1] = sub .. '_melee'
