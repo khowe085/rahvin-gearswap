@@ -589,7 +589,7 @@ end
 -- Here, it reloads the AzureSets spell set for the new subjob and the current job mode.
 -- It waits for the game to finish the change, because a main job change also fires this while this file is still loaded.
 function sub_job_change_custom(new, old)
-	coroutine.schedule(load_azure_set, 2)
+	coroutine.schedule(load_azure_set, 5)
 end
 
 -- Called before each action, after the engine's own checks. Cancel the action here with cancel_spell(). Nothing it returns is used.
