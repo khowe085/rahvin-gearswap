@@ -339,7 +339,7 @@ state.OffenseMode:set('TP')
 -- failsafe delay releases them when no completion arrives.
 state.SpellReceived = M { ['description'] = "Spell-Received" }
 state.SpellReceived:options('OFF', 'ON')
-state.SpellReceived:set('ON')
+state.SpellReceived:set('OFF')
 
 -- The Hoxne Ampulla hold. ON-Locked keeps range and ammo outright, so nothing else may enter
 -- either. ON-Allow Critical holds them the same way, but stands aside for the four actions

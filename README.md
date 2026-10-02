@@ -623,7 +623,7 @@ For players running more than one character. When another of your characters cas
 | `ON` | Equip received gear and hold those slots until the spell resolves |
 | `OFF` | Disabled |
 
-Defaults to `ON`. Every switch, in either direction, releases everything the feature is holding.
+Defaults to `OFF`. Every switch, in either direction, releases everything the feature is holding.
 
 - **Command:** `//gs c SpellReceived ON` · **Default key:** <kbd>Ctrl</kbd>+<kbd>F9</kbd>
 

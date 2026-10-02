@@ -70,6 +70,8 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   [AutoBuff](README.md#autobuff).
 - **Treasure Hunter defaults to `Tag`.** Every job now starts in `Tag` (THF used to start
   in `Full Time`, every other job in `None`).
+- **SpellReceived defaults to `OFF`.** Turn it on with `gs c SpellReceived ON` or
+  Ctrl+F9.
 - **New default keys.** F10 Stance (OffenseMode), F11 AutoWS, F12 AutoBuff, Alt+F9 Weapon
   Lock, Alt+F11 Treasure Hunter. F9 Weapon Mode and the Ctrl keys are unchanged. A
   settings file keeps the keys it already holds, and a clash leaves the later mode
