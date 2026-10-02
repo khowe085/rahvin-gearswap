@@ -23,9 +23,6 @@ Lockstyle_List = {1,2,6,12}
 -- The offense mode to start in. This file offers the engine's default modes, TP, ACC and DT.
 state.OffenseMode:set('DT')
 
--- Not read by this engine.
-Organizer = true
-
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.
 state.WeaponMode:options('Nirvana','Mpaca')
 state.WeaponMode:set('Nirvana')

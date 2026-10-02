@@ -26,9 +26,6 @@ Lockstyle_List = {1,2,6,12}
 state.OffenseMode:options('TP','ACC','DT','PDT','MEVA')
 state.OffenseMode:set('DT')
 
--- Not read by this engine.
-Organizer = false
-
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.
 state.WeaponMode:options('Seraph Strike','Black Halo','Asclepius','Mpaca')
 state.WeaponMode:set('Mpaca')

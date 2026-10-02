@@ -20,9 +20,6 @@ Random_Lockstyle = false
 -- The lockstyle sets the random pick chooses from.
 Lockstyle_List = {1,2,6,12}
 
--- Not read by this engine.
-Organizer = false
-
 -- Offense modes, and the one the file starts in. TP, ACC and DT are the engine's defaults, and more can be added.
 -- Each mode picks its own engaged, idle and weaponskill sets, so each one offered needs a sets.OffenseMode.<Mode> and a sets.Idle.<Mode> below.
 state.OffenseMode:options('DT','TP','PDL','MEVA','ACC','SB','CRIT')

@@ -22,9 +22,6 @@ state.OffenseMode:options('TP','ACC','DT','PDT','PDL','SB','MEVA')
 -- When true, each load picks a lockstyle set from Lockstyle_List in place of LockStylePallet.
 Random_Lockstyle = false
 
--- Not read by this engine.
-Organizer = false
-
 -- The lockstyle sets Random_Lockstyle picks from.
 Lockstyle_List = {1,2,6,12}
 
