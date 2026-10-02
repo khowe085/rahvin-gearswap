@@ -662,9 +662,20 @@ end
 -- Loads the AzureSets spell set for the subjob and job mode: {sub}_mage in AoE mode, {sub}_melee in Melee mode.
 -- A missing {sub}_mage falls back to {sub}_melee, and a missing {sub}_melee falls back to nin_melee. Each miss is warned in chat.
 -- It reads the job from the game, not GearSwap's player table, and does nothing unless the main job is BLU.
-function load_azure_set()
+-- After a job change the game sends the blue magic spell list late, and AzureSets errors without it, so it retries each second for up to ten tries.
+function load_azure_set(tries)
 	local current = windower.ffxi.get_player()
 	if not current or current.main_job ~= 'BLU' then return end
+	local job_data = windower.ffxi.get_mjob_data()
+	if not job_data or not job_data.spells then
+		tries = (tries or 0) + 1
+		if tries < 10 then
+			coroutine.schedule(function() load_azure_set(tries) end, 1)
+		else
+			warn('Blue magic spell list not loaded, AzureSets spell set skipped')
+		end
+		return
+	end
 	local sub = (current.sub_job or 'nin'):lower()
 	local candidates = {}
 	if state.JobMode.value == 'AoE' then candidates[#candidates+1] = sub .. '_mage' end
