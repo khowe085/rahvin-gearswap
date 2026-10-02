@@ -604,10 +604,10 @@ The engine remembers which monsters you have already tagged, so it only wears TH
 
 In every mode but `None`, an **untagged** monster gets the set: that is the swing that applies the tag. The modes differ in what happens afterward.
 
-A job file can declare `TH_Spells` to limit which spells wear the set. With the list in place, only a listed spell gets TH gear at midcast, and a spell off the list does not mark the monster tagged, since it landed without TH gear. Without the list, every spell qualifies. The sample RDM lists Dia, Dia II, Dia III and Stonega, and the sample BLU lists Glutinous Dart:
+A job file can declare `TH_Whitelist` to limit what wears the set. With the list in place, only a listed spell, job ability or weaponskill gets TH gear against an untagged monster (`Ranged` covers ranged attacks), and in `Tag` mode being engaged on an untagged monster no longer equips it. An action off the list does not mark the monster tagged, since it landed without TH gear; neither does a melee swing in `Tag` mode. `Full Time` and `SATA` still wear the set while engaged. Without the list, everything above applies as before. The sample RDM lists Dia, Dia II, Dia III and Stonega, and the sample BLU lists Glutinous Dart:
 
 ```lua
-TH_Spells = S { 'Dia', 'Dia II', 'Dia III', 'Stonega' }
+TH_Whitelist = S { 'Dia', 'Dia II', 'Dia III', 'Stonega' }
 ```
 
 Defaults to `Tag` on every job. Tagged monsters are forgotten after three minutes of inactivity, and cleared entirely when you zone.

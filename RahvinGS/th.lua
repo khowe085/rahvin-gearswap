@@ -51,6 +51,25 @@ return function(E)
     local Divergence_Zones, res                           = E.Divergence_Zones, E.res
     local roll_action, roll_clear                         = E.roll_action, E.roll_clear
 
+    -- The name TH_Whitelist is checked against for each tagging category. A ranged attack
+    -- carries no action id, so it goes by 'Ranged', the name precast sees for it.
+    local function whitelist_name(category, param)
+        local source
+        if category == 2 then
+            return 'Ranged'
+        elseif category == 3 then
+            source = res.weapon_skills
+        elseif category == 4 then
+            source = res.spells
+        elseif category == 6 or category == 14 then
+            source = res.job_abilities
+        elseif category == 11 then
+            source = res.monster_abilities
+        end
+        local action = source and source[param]
+        return action and action.english
+    end
+
     ------------------------------------------------------------------------------------------------
     -- SECTION 18 - TREASURE HUNTER TRACKING
     ------------------------------------------------------------------------------------------------
@@ -262,16 +281,23 @@ return function(E)
                 -- rebuild, so the build can drop Treasure Hunter gear once the mob is tagged. A
                 -- mob already in the table is only restamped, because the build already reads
                 -- it as tagged. A target the mob lookup cannot find, or one that is not an NPC,
-                -- only has its stamp refreshed, and only when it is already in the table. When
-                -- the job file declares TH_Spells, a spell off that list was cast without
-                -- Treasure Hunter gear, so it only refreshes a tag and never adds one.
+                -- only has its stamp refreshed, and only when it is already in the table.
+                --
+                -- When the job file declares TH_Whitelist, only an action that wore Treasure
+                -- Hunter gear adds a tag: a spell, weaponskill or job ability on the list, or
+                -- a melee swing outside Tag mode, where the engaged set carries the gear.
+                -- Anything else only refreshes a tag already held.
                 if state.TreasureMode.value ~= 'None' and TaggingCategories:contains(data.category) then
                     local target = data.targets[1]
                     local target_mob = target and get_mob_by_id(target.id)
                     local tags = true
-                    if data.category == 4 and TH_Spells then
-                        local cast = res.spells[data.param]
-                        tags = cast ~= nil and TH_Spells:contains(cast.english)
+                    if TH_Whitelist then
+                        if data.category == 1 then
+                            tags = state.TreasureMode.value ~= 'Tag'
+                        else
+                            local name = whitelist_name(data.category, data.param)
+                            tags = name ~= nil and TH_Whitelist:contains(name)
+                        end
                     end
                     if tags and target_mob and target_mob.is_npc then
                         local first_tag = not th_info.tagged_mobs[target.id]
