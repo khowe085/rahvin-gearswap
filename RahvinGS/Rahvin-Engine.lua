@@ -154,7 +154,7 @@ do
     -- off, and a wrapped handler would be held back for exactly as long as the hold stands.
     windower.raw_register_event('addon command', E.test_hold_watch)
 
-    -- The short words 'gs d' and 'gs t', registered raw so 'gs t' still reaches the engine
+    -- The short words 'gs d', 'gs e' and 'gs t', registered raw so 'gs t' still reaches the engine
     -- while a test hold has the job file off.
     windower.raw_register_event('addon command', E.short_word)
 

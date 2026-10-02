@@ -1122,6 +1122,8 @@ A bare `//gs disable` or `//gs enable`, which switches your whole job file off o
 
 `//gs d` is short for `//gs disable`, so `//gs d head ear1` holds those slots. GearSwap doesn't know the word `d` and prints its own line first. A bare `//gs d` switches the whole job file off, as a bare `//gs disable` does.
 
+`//gs e` is short for GearSwap's own `//gs equip`, as in `//gs e naked`. It is GearSwap's command, not the engine's, so it does not check the holds: the weapon lock keeps main because main is disabled, but sub is not, so `//gs e naked` takes sub off. Use `//gs c naked` or `//gs c weaponsonly` when that matters.
+
 ### The weapon lock
 
 `gs c weaponlock` is a [mode](#weaponlock) rather than a momentary hold, and <kbd>Alt</kbd>+<kbd>F9</kbd> cycles it by default. Under `Locked`, `sets.Weapons[<your weapon mode>]` is the only thing that changes main and sub, in every phase — precast, midcast and aftercast alike. No other set can put a different weapon beside the locked pair: not a pet, Sublimation or movement set, and not a buff set. The pair starts as whatever you are wearing, so a slot the mode names nothing for is held as found.

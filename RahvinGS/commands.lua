@@ -1927,12 +1927,13 @@ return function(E)
     end
 
     -- Short words typed after '//gs', each sent on as the longer command: 'gs d' as GearSwap's
-    -- own 'gs disable', which native_disable_notice then brings into the disable hold, and
-    -- 'gs t' as 'gs c test'. GearSwap knows neither word and answers it first. Registered
+    -- own 'gs disable', which native_disable_notice then brings into the disable hold, 'gs e'
+    -- as GearSwap's own 'gs equip', and 'gs t' as 'gs c test'. GearSwap knows none of the
+    -- three words and answers each first. Registered
     -- raw by the root, so 'gs t' still works while a test hold has the job file off; the
     -- 'gs c test' it sends is then the one test_hold_watch releases the hold for. The rest
     -- of the line goes along as typed, and a bare word sends the bare command.
-    local SHORT_WORDS = { d = 'gs disable', t = 'gs c test' }
+    local SHORT_WORDS = { d = 'gs disable', e = 'gs equip', t = 'gs c test' }
     local function short_word(first, ...)
         if type(first) ~= 'string' then return end
         local target = SHORT_WORDS[first:lower()]
