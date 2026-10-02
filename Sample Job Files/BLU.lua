@@ -589,7 +589,7 @@ end
 -- Here, it reloads the AzureSets spell set for the new subjob and the current job mode.
 -- It waits for the game to finish the change, because a main job change also fires this while this file is still loaded.
 function sub_job_change_custom(new, old)
-	coroutine.schedule(load_azure_set, 5)
+	queue_azure_set(5)
 end
 
 -- Called before each action, after the engine's own checks. Cancel the action here with cancel_spell(). Nothing it returns is used.
@@ -641,12 +641,23 @@ end
 -- Testing the first word keeps jobmode2 and other commands that merely contain jobmode from triggering it.
 function self_command_custom(command)
 	if command:match('^(%S+)') == 'jobmode' then
-		load_azure_set()
+		queue_azure_set(0)
 	end
 end
 
 -- The AzureSets save file, read to learn which spell sets exist.
 local azure_settings_path = windower.windower_path .. 'addons/AzureSets/data/settings.xml'
+
+-- Each queued load takes a new request number, and a scheduled load or retry for an older number does nothing.
+-- Changing main job to BLU loads this file and may also change the subjob, and this keeps that to one //aset command.
+local azure_request = 0
+
+-- Schedules load_azure_set after delay seconds, replacing any load still waiting.
+function queue_azure_set(delay)
+	azure_request = azure_request + 1
+	local request = azure_request
+	coroutine.schedule(function() load_azure_set(request) end, delay)
+end
 
 -- Returns a lookup of the spell set names saved in AzureSets, or nil when the file cannot be read.
 local function azure_set_names()
@@ -663,14 +674,15 @@ end
 -- A missing {sub}_mage falls back to {sub}_melee, and a missing {sub}_melee falls back to nin_melee. Each miss is warned in chat.
 -- It reads the job from the game, not GearSwap's player table, and does nothing unless the main job is BLU.
 -- After a job change the game sends the blue magic spell list late, and AzureSets errors without it, so it retries each second for up to ten tries.
-function load_azure_set(tries)
+function load_azure_set(request, tries)
+	if request ~= azure_request then return end
 	local current = windower.ffxi.get_player()
 	if not current or current.main_job ~= 'BLU' then return end
 	local job_data = windower.ffxi.get_mjob_data()
 	if not job_data or not job_data.spells then
 		tries = (tries or 0) + 1
 		if tries < 10 then
-			coroutine.schedule(function() load_azure_set(tries) end, 1)
+			coroutine.schedule(function() load_azure_set(request, tries) end, 1)
 		else
 			warn('Blue magic spell list not loaded, AzureSets spell set skipped')
 		end
@@ -724,3 +736,6 @@ function pet_midcast_custom(spell)
 
 	return equipSet
 end
+
+-- Loads the spell set when this file loads, which covers changing main job to BLU. It waits as a subjob change does.
+queue_azure_set(5)
