@@ -530,15 +530,7 @@ return function(E)
     -- Runs when the player's status changes: engaged, idle, resting or dead. It is not gated
     -- on the busy window, because a status change must re-dress the character even
     -- mid-action.
-    --
-    -- The weapon lock holds only while engaged, so entering or leaving the Engaged status
-    -- resolves it again before the build: the pair is taken on engage and let go on
-    -- disengage.
     function status_change(new, old)
-        if (new == 'Engaged') ~= (old == 'Engaged') then
-            E.resolve_weapon_lock(new)
-            display_box_update()
-        end
         local built_set = build_current_set()
         if status_change_custom then
             merge_into(built_set, status_change_custom(new, old))
