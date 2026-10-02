@@ -2251,13 +2251,20 @@ return function(E)
     -- as found, and the slots are taken at once. Every build under the mode then overwrites
     -- the slots it names, and the hold moves with them. Unlocking clears the pair and lets
     -- every held slot go.
-    local function resolve_weapon_lock()
+    --
+    -- Unlocked holds as Locked while the player is engaged, so a cast mid-fight cannot swap
+    -- the weapons and cost TP. The mode itself stays Unlocked. The status_change hook
+    -- resolves again whenever the player enters or leaves the Engaged status, and passes the
+    -- new status, since GearSwap's player table may not yet carry it.
+    local function resolve_weapon_lock(status)
         local v = state.WeaponLock.value
         if v == 'Locked+R' and hoxne_on() then
             v = 'Locked'
             state.WeaponLock:set(v)
             notice('Weapon Lock: [Locked] (Hoxne Ampulla holds range)')
         end
+        status = status or (player and player.status)
+        if v == 'Unlocked' and status == 'Engaged' then v = 'Locked' end
         E.lock_main_sub = v == 'Locked' or v == 'Locked+R' or v == 'Songs' or v == 'Geomancy'
         E.lock_range    = v == 'Locked+R'
         E.lock_songs    = v == 'Songs'

@@ -372,7 +372,7 @@ state.WeaponMode:set('OFF')
 
 -- The weapon lock, separate from the weapon mode. The mode says what the weapons are, and
 -- the lock says whether anything but the mode may change main and sub.
---   Unlocked   holds nothing.
+--   Unlocked   holds nothing out of combat, and holds as Locked while engaged.
 --   Locked     makes the weapon mode the only writer of main and sub in every phase.
 --   Songs      (Bard) Locked, except for a song aimed at the bard, another player or a Trust.
 --   Locked+R   (Corsair) Locked, and holds range as well unless a Hoxne mode holds it.
