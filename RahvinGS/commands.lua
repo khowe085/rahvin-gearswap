@@ -20,7 +20,7 @@
 -- CONTENTS
 --   Section 21 - Everything reachable through 'gs c ...', in six parts:
 --     Argument handling ... command_arg, and the mode validator every mode command shares
---     The keybinds ........ the table of the eight key-bound modes, the keyspec grammar every
+--     The keybinds ........ the table of the ten key-bound modes, the keyspec grammar every
 --                           key passes through, the registry of the keys this load holds, and
 --                           the bind, release and key-list functions that lifecycle.lua calls
 --                           at load and unload and the keybind command calls on a change
@@ -31,14 +31,16 @@
 --
 -- The commands serve three audiences:
 --     Typed by the player ... most of them: toggles, diagnostics and item shortcuts
---     Bound to a key ........ the eight modes lifecycle.lua binds, through keybind_apply, to
---                             the keys in settings.Keybinds. By default OffenseMode,
---                             TreasureHunter, WeaponLock and WeaponMode take F12 down to F9,
---                             and JobMode, JobMode2, Hoxne and SpellReceived take the same
---                             four keys with Ctrl.
+--     Bound to a key ........ the ten modes lifecycle.lua binds, through keybind_apply, to
+--                             the keys in settings.Keybinds. By default AutoBuff, AutoWS,
+--                             OffenseMode and WeaponMode take F12 down to F9, and JobMode,
+--                             JobMode2, Hoxne and SpellReceived take the same four keys
+--                             with Ctrl. TreasureHunter takes Alt+F11 and WeaponLock
+--                             Alt+F9.
 --     Sent by the engine .... update auto, enchrepair, hoxnerelock and hoxnerelease. A raw
 --                             event handler cannot equip, so it sends one of these, and the
---                             equip lands inside the wrapped command.
+--                             equip lands inside the wrapped command. gs c test sends
+--                             testpass, so its precast and midcast each get an equip pass.
 -- The key bindings send mixed case, such as 'gs c OffenseMode'. They resolve because the
 -- dispatcher lowercases a command before it looks anything up.
 --
@@ -53,7 +55,8 @@
 --          the gear rebuild, and then return true, so it runs once. Changing which commands
 --          reach the hook changes job-file behavior with no error anywhere. The shipped RNG
 --          file calls its ammunition routine from that hook on every command that reaches it.
--- EXPORTS  native_disable_notice, which the root registers on the addon command event, and
+-- EXPORTS  native_disable_notice and test_hold_watch, which the root registers on the addon
+--          command event, test_hold_clear, which lifecycle.lua calls at unload, and
 --          the keybind functions keybind_apply, keybind_release and keybind_list, which
 --          lifecycle.lua calls at load and unload. The mode table keybind_modes, the key
 --          registry keybinds_bound and the keyspec grammar are exported beside them:
@@ -89,11 +92,14 @@ return function(E)
     local display_styles, set_display_style = E.display_styles, E.set_display_style
     local display_visible, min_value_cells = E.display_visible, E.min_value_cells
     local display_logged_out = E.display_logged_out
+    local TYPE_WS, merge_into, merge_report_flush = E.TYPE_WS, E.merge_into, E.merge_report_flush
+    local keep_weaponskill_weapons, yield_range_to_ammo = E.keep_weaponskill_weapons, E.yield_range_to_ammo
+    local merge_report_layers = E.merge_report_layers
 
     ------------------------------------------------------------------------------------------------
     -- SECTION 21 - SELF COMMANDS
     ------------------------------------------------------------------------------------------------
-    -- Everything reachable through 'gs c ...': what a player types, what the eight key
+    -- Everything reachable through 'gs c ...': what a player types, what the ten key
     -- bindings send, and the four commands the engine sends itself so that an equip lands
     -- inside a wrapped event.
 
@@ -167,21 +173,26 @@ return function(E)
 
     -- The keybinds --------------------------------------------------------------------------------
 
-    -- The eight key-bound modes in key-list order. Each row holds the command word, which is
+    -- The ten key-bound modes in key-list order. Each row holds the command word, which is
     -- also the key under settings.Keybinds, the label chat prints, the line of the key list
     -- the row sits on, the shipped default in Windower's spelling, and the command the key
     -- sends. The two job-mode rows also name, as ui, the job-file global that carries their
     -- label. That name is read at print time, and the label here stands in when it is empty.
     -- The sent command is mixed case, and the dispatcher lowercases it.
     local keybind_modes = {
-        { word = 'offensemode',    label = 'Stance',                    line = 1, default = 'f12',  command = 'gs c OffenseMode' },
+        { word = 'offensemode',    label = 'Stance',                    line = 1, default = 'f10',  command = 'gs c OffenseMode' },
         { word = 'weaponmode',     label = 'Weapon Mode',               line = 1, default = 'f9',   command = 'gs c WeaponMode' },
-        { word = 'weaponlock',     label = 'Weapon Lock',               line = 1, default = 'f10',  command = 'gs c WeaponLock' },
-        { word = 'treasurehunter', label = 'TH Mode',                   line = 1, default = 'f11',  command = 'gs c TreasureHunter' },
+        { word = 'weaponlock',     label = 'Weapon Lock',               line = 1, default = '!f9',  command = 'gs c WeaponLock' },
+        { word = 'treasurehunter', label = 'TH Mode',                   line = 1, default = '!f11', command = 'gs c TreasureHunter' },
         { word = 'jobmode',        label = 'Job Mode',   ui = 'UI_Name',  line = 2, default = '^f12', command = 'gs c JobMode' },
         { word = 'jobmode2',       label = 'Job Mode 2', ui = 'UI_Name2', line = 2, default = '^f11', command = 'gs c JobMode2' },
         { word = 'hoxne',          label = 'Hoxne Ampulla',             line = 2, default = '^f10', command = 'gs c Hoxne' },
         { word = 'spellreceived',  label = 'Spell Received (Multibox)', line = 2, default = '^f9',  command = 'gs c SpellReceived' },
+        -- Last in the table, so on a clash an engine mode above keeps its key. Listed on line 1
+        -- beside the other F-key modes.
+        { word = 'autows',         label = 'Auto WS',                   line = 1, default = 'f11',  command = 'gs c AutoWS' },
+        -- On line 2, because line 1 would pass the 100 characters the game prints unwrapped.
+        { word = 'autobuff',       label = 'Auto Buff',                 line = 2, default = 'f12',  command = 'gs c AutoBuff' },
     }
 
     -- The job file's name for a job-mode row, which is empty when the file left the mode
@@ -268,6 +279,9 @@ return function(E)
         local taken, wants = {}, {}
         for i, row in ipairs(keybind_modes) do
             local want = settings.Keybinds[row.word]
+            -- A row added after the settings file was written has no value of its own yet,
+            -- and takes its default without a notice.
+            if want == nil then want = row.default end
             if not keyspec_valid_setting(want) then
                 notice(("Keybinds: '%s' for %s is not a key; using the default [%s]."):format(
                     tostring(want), keybind_label(row), keyspec_human(row.default)))
@@ -365,7 +379,9 @@ return function(E)
     local command_takes_arg = {
         ["abysseaproc"] = true,
         ["aptitude"] = true,
+        ["autobuff"] = true,
         ["autows"] = true,
+        ["autowsbuff"] = true,
         ["capacity"] = true,
         ["debug"] = true,
         ["display"] = true,
@@ -390,6 +406,8 @@ return function(E)
         ["offensemode"] = true,
         ["profile"] = true,
         ["spellreceived"] = true,
+        ["test"] = true,
+        ["testpass"] = true,
         ["treasurehunter"] = true,
         ["use"] = true,
         ["warn"] = true,
@@ -637,7 +655,7 @@ return function(E)
         return true
     end
 
-    -- Treasure Hunter mode, default key F11. It is the first of the eight mode commands, and
+    -- Treasure Hunter mode, default key Alt+F11. It is the first of the mode commands, and
     -- shows the shape they share: bare cycles to the next value, and an argument sets one
     -- exactly. A rejected argument returns true without touching the mode, so a typo changes
     -- nothing and does not reach the job file either.
@@ -656,7 +674,7 @@ return function(E)
         return true
     end
 
-    -- The auto weaponskill. No default key. The same shape as the mode command above, but
+    -- The auto weaponskill, default key F11. The same shape as the mode command above, but
     -- the options come from AutoWS_List for the current weapon mode, so they are brought up
     -- to date first. Choosing an option changes no gear, so nothing is rebuilt.
     command_handlers["autows"] = function(cmd, command)
@@ -667,6 +685,32 @@ return function(E)
             return true
         end
         notice('Auto WS: [' .. state.AutoWS.value .. ']')
+        display_box_update()
+        return true
+    end
+
+    -- The auto weaponskill buff. No default key. The same shape as the mode command above.
+    -- It changes no gear, so nothing is rebuilt.
+    command_handlers["autowsbuff"] = function(cmd, command)
+        if command == "autowsbuff" then
+            state.AutoWSBuff:cycle()
+        elseif not set_mode_arg(state.AutoWSBuff, 'Auto WS Buff', 'AutoWSBuff', command_arg(cmd)) then
+            return true
+        end
+        notice('Auto WS Buff: [' .. state.AutoWSBuff.value .. ']')
+        return true
+    end
+
+    -- The auto buff, default key F12. The same shape as the auto weaponskill above, with the
+    -- options brought up to date from AutoBuff_List first.
+    command_handlers["autobuff"] = function(cmd, command)
+        if autobuff_sync() then invalidate_layout() end
+        if command == "autobuff" then
+            state.AutoBuff:cycle()
+        elseif not set_mode_arg(state.AutoBuff, 'Auto Buff', 'AutoBuff', command_arg(cmd)) then
+            return true
+        end
+        notice('Auto Buff: [' .. state.AutoBuff.value .. ']')
         display_box_update()
         return true
     end
@@ -1149,7 +1193,7 @@ return function(E)
         use_enchantment("Trizek Ring")
     end
 
-    -- Offense mode, default key F12. The plainest of the eight, with no state to release and
+    -- Offense mode, default key F10. The plainest of the eight, with no state to release and
     -- no slot to take.
     command_handlers["offensemode"] = function(cmd, command)
         if command == 'offensemode' then
@@ -1192,7 +1236,7 @@ return function(E)
         return true
     end
 
-    -- Weapon lock, default key F10. The shared mode shape, plus the resolution of the new
+    -- Weapon lock, default key Alt+F9. The shared mode shape, plus the resolution of the new
     -- value into the lock flags before the echo, so no build path reads the mode itself.
     -- Hoxne owns range above the lock, so Locked+R is refused while Hoxne is on. When it is
     -- given as an argument, the lock stays where it was. The cycle passes over it, since a
@@ -1281,7 +1325,7 @@ return function(E)
             if refuse_logged_out('Keybind') then return true end
             for _, row in ipairs(keybind_modes) do settings.Keybinds[row.word] = row.default end
             keybind_apply()
-            notice('All eight keys reset to their defaults.')
+            notice('All mode keys reset to their defaults.')
             save_settings()
             return true
         end
@@ -1351,6 +1395,8 @@ return function(E)
         { word = 'hoxne',          group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the Hoxne Ampulla mode, or set it by name' },
         { word = 'spellreceived',  group = 'modes',       args = '[<mode>]',                 purpose = 'cycle spell-received gear tracking, or set it by name' },
         { word = 'autows',         group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the auto weaponskill for the current weapon, or set it by name' },
+        { word = 'autowsbuff',     group = 'modes',       args = '[ON|OFF]',                 purpose = 'toggle the buff used before each weaponskill, or set it' },
+        { word = 'autobuff',       group = 'modes',       args = '[<mode>]',                 purpose = 'cycle the auto buff list, or set it by name' },
         { word = 'display',        group = 'display',     args = '[on|off]',                 purpose = 'show or hide the status box' },
         { word = 'displaymode',    group = 'display',     args = '[on|off]',                 purpose = 'switch the mode box between one line and several' },
         { word = 'displaystyle',   group = 'display',     args = '[<style>]',                purpose = 'cycle the renderer that draws the box, or choose one by name' },
@@ -1390,6 +1436,8 @@ return function(E)
         { word = 'version',        group = 'utility',     args = '',                         purpose = 'say which engine version is loaded' },
         { word = 'profile',        group = 'utility',     args = '<name>',                   purpose = 'run a Windower script chosen by the current job pairing' },
         { word = 'shutdown',       group = 'utility',     args = '',                         purpose = 'close this game client' },
+        { word = 'test',           group = 'utility',     args = 'set <set> | [precast|midcast] <action>', purpose = 'wear a set or an action\'s gear, held 30s' },
+        { word = 'testpass',       group = 'internal',    args = '<n>',                      purpose = "run a gs c test action's precast or midcast pass" },
         { word = 'checksets',      group = 'diagnostics', args = '',                         purpose = 'sort every declared set into carries gear, empty, and undeclared placeholder' },
         { word = 'gearreporting',  group = 'diagnostics', args = '[on|off]',                 purpose = 'switch the set-selection trace channel on or off' },
         { word = 'enchinfo',       group = 'diagnostics', args = '<item>',                   purpose = 'dump the live extdata for one enchanted item' },
@@ -1560,6 +1608,276 @@ return function(E)
         UnlockByMode()
     end
 
+    -- Testing gear -------------------------------------------------------------------------------
+
+    -- 'gs c test set <set>' wears a set over a naked character. 'gs c test [precast|midcast]
+    -- <action>' strips all but the weapons, then runs the engine's and the job file's
+    -- precast and midcast builds for a spell, ability or weaponskill, each in its own equip
+    -- pass as for a real use, without using it. 'precast' stops before midcast. The action
+    -- skips pretarget, so none of the can't-act checks, the busy window, the Hoxne window or
+    -- the multibox announce touch it. It is flagged spell.test, so a job file's own hooks
+    -- can tell it from a real use.
+    --
+    -- Either form then switches the job file off for 30 seconds, as '//gs disable' does, so
+    -- the gear stays on, and the timer switches it back on and dresses the character again.
+    -- GearSwap drops every 'gs c' while the file is off, so a raw watcher on GearSwap's own
+    -- commands answers the hold: another 'gs c test' releases it and runs, and a bare
+    -- '//gs enable' or '//gs disable' takes over from the timer.
+    --
+    -- GearSwap's own state is reached through gearswap, the global table it hands to every
+    -- user file, as build_is_worn reads it.
+    local TEST_HOLD_SECONDS = 30
+    local TEST_STRIP = { 'ammo', 'head', 'neck', 'left_ear', 'right_ear', 'body', 'hands',
+        'left_ring', 'right_ring', 'back', 'waist', 'legs', 'feet' }
+    local TEST_ALL = { 'main', 'sub', 'range', 'ammo', 'head', 'neck', 'left_ear', 'right_ear',
+        'body', 'hands', 'left_ring', 'right_ring', 'back', 'waist', 'legs', 'feet' }
+    local TEST_USAGE = 'Usage: //gs c test set <set>  or  //gs c test [precast|midcast] <action>'
+    -- test_token counts holds and passes, so a stale timer or a stale midcast pass does
+    -- nothing. test_holding marks the file as switched off by a test rather than by the
+    -- player. test_fresh marks a hold taken during the command now being dispatched, which
+    -- the watcher below also sees and must not read as a second test.
+    local test_token, test_holding, test_fresh = 0, false, false
+    local test_pending = nil
+
+    -- The spell table GearSwap would hand the hooks for the named action, aimed at the
+    -- current target or the player, flagged test. nil when nothing has that name.
+    local function test_action(name)
+        local g = gearswap
+        local lang = g.language or 'english'
+        local abils = g.validabils and g.validabils[lang]
+        if not abils then return end
+        local resources = { ['/ma'] = g.res.spells, ['/ws'] = g.res.weapon_skills, ['/ja'] = g.res.job_abilities }
+        for _, prefix in ipairs({ '/ma', '/ws', '/ja' }) do
+            local id = abils[prefix] and abils[prefix][name]
+            if id then
+                local r_line = g.copy_entry(resources[prefix][id])
+                r_line.name = r_line[lang]
+                local spell = g.spell_complete(r_line)
+                spell.target = g.target_complete(windower.ffxi.get_mob_by_target('t')
+                    or windower.ffxi.get_mob_by_target('me'))
+                spell.target.raw = spell.target.type == 'SELF' and '<me>' or '<t>'
+                spell.action_type = g.action_type_map[prefix]
+                spell.test = true
+                return spell
+            end
+        end
+    end
+
+    -- The set a dotted path names, read the way '//gs equip' reads one, or nil.
+    local function test_set(path)
+        local keys = gearswap.parse_set_to_keys(path)
+        local set = sets
+        for i, key in ipairs(keys) do
+            if not (i == 1 and key == 'sets') then
+                if type(set) ~= 'table' then return end
+                set = set[key]
+            end
+        end
+        if type(set) == 'table' and set ~= sets then return set end
+    end
+
+    -- Run the job file's hook as GearSwap would in that phase, so a cancel_spell() or a phase
+    -- check inside it sees the phase it expects rather than the self command.
+    local function test_custom(phase, hook, spell)
+        if not hook then return end
+        local g = gearswap._global
+        local was = g and g.current_event
+        if g then g.current_event = phase end
+        local ok, result = pcall(hook, spell)
+        if g then g.current_event = was end
+        if not ok then error(result, 0) end
+        return result
+    end
+
+    -- One phase's build, as the precast and midcast hooks make it, without the window, busy
+    -- and multibox handling around them, and without the Idle floor, so the test shows only
+    -- the gear the action chose. Returns the build and the names of what dressed it: every
+    -- set the build merged that carried gear, then the job file's hook and the engine's
+    -- implement when either added any.
+    local function test_build(phase, spell)
+        local built_set, custom
+        E.test_no_idle_floor = true
+        local ok, err = pcall(function()
+            if phase == 'precast' then
+                built_set = precastequip(spell) or {}
+            else
+                built_set = midcastequip(spell) or {}
+            end
+        end)
+        E.test_no_idle_floor = false
+        if not ok then error(err, 0) end
+        local names = merge_report_layers()
+        merge_report_flush(phase, spell)
+        if phase == 'precast' then
+            custom = test_custom('precast', precast_custom, spell)
+        else
+            custom = test_custom('midcast', midcast_custom, spell)
+        end
+        if type(custom) == 'table' and next(custom) then names[#names + 1] = phase .. '_custom' end
+        merge_into(built_set, custom)
+        local equipment_spell_set, refused = check_equipment_spells(spell)
+        if phase == 'precast' then report_refused(spell.english, refused, notice) end
+        if equipment_spell_set then
+            merge_into(built_set, equipment_spell_set)
+            names[#names + 1] = 'the engine\'s implement'
+        end
+        if spell.type == TYPE_WS then keep_weaponskill_weapons(built_set, spell) end
+        if phase == 'precast' and spell.action_type == 'Magic' then yield_range_to_ammo(built_set) end
+        return built_set, names
+    end
+
+    -- The chat line for one pass: the action, the phase and what it put on.
+    local function test_say(spell, phase, names)
+        notice(('Test: [%s] %s: %s'):format(spell.english, phase,
+            #names > 0 and table.concat(names, ' + ')
+            or phase == 'precast' and 'no set carried gear; the slots stay bare'
+            or 'no set carried gear; the precast gear stays'))
+    end
+
+    -- Queue the next pass of the action under test. Each pass is its own command, so it is
+    -- its own equip pass, under a token a newer test makes stale.
+    local function test_next(pending, phase)
+        test_token = test_token + 1
+        pending.token, pending.phase = test_token, phase
+        test_pending = pending
+        windower.send_command('gs c testpass ' .. test_token)
+    end
+
+    -- Switch the job file back on, if a test switched it off. The timer it set lapses.
+    local function test_release()
+        if not test_holding then return end
+        test_holding, test_fresh = false, false
+        test_token = test_token + 1
+        gearswap.gearswap_disabled = false
+    end
+
+    -- Switch the job file off for the hold, and arm the timer that ends it. The equip this
+    -- event proposed still goes out, because GearSwap reads the switch only when an event
+    -- begins.
+    local function test_hold()
+        test_token = test_token + 1
+        test_holding, test_fresh = true, true
+        gearswap.gearswap_disabled = true
+        notice(('Test: job file off for %d seconds while the test gear is on.'):format(TEST_HOLD_SECONDS))
+        local token = test_token
+        coroutine.schedule(function()
+            if token ~= test_token or not test_holding then return end
+            test_release()
+            notice('Test: job file back on.')
+            equip_set_command()
+        end, TEST_HOLD_SECONDS)
+    end
+
+    command_handlers["test"] = function(cmd, command)
+        local arg = command_arg(cmd)
+        local stage = arg and arg:match('^(%S+)'):lower()
+        if stage == 'set' then
+            local path = command_arg(arg)
+            if not path then
+                warn(TEST_USAGE)
+                return true
+            end
+            local set = test_set(path)
+            if not set then
+                notice('Test: no set called ' .. path .. '.')
+                return true
+            end
+            test_release()
+            test_pending = nil
+            local naked = {}
+            for _, slot in ipairs(TEST_ALL) do naked[slot] = empty end
+            equip(naked, set)
+            notice('Test: naked, then ' .. path)
+            test_hold()
+            return true
+        end
+
+        if stage == 'precast' or stage == 'midcast' then
+            arg = command_arg(arg)
+        else
+            stage = nil
+        end
+        local name = arg and arg:gsub('"', ''):lower()
+        if not name or name == '' then
+            warn(TEST_USAGE)
+            return true
+        end
+        local spell = test_action(name)
+        if not spell then
+            notice('Test: no spell, ability or weaponskill called "' .. name .. '".')
+            return true
+        end
+
+        test_release()
+        test_pending = nil
+        -- The first pass strips every slot but the weapons, which stay as they would for a
+        -- real action: held by the lock, or swapped by the sets. Precast and midcast follow,
+        -- each in a pass of its own.
+        local naked = {}
+        for _, slot in ipairs(TEST_STRIP) do naked[slot] = empty end
+        equip(naked)
+        notice('Test: [' .. spell.english .. '] naked but main, sub and range')
+        test_next({ spell = spell, stage = stage }, 'precast')
+        return true
+    end
+
+    command_handlers["testpass"] = function(cmd, command)
+        local pending = test_pending
+        test_pending = nil
+        if not pending or tonumber(command_arg(command)) ~= pending.token then return true end
+        local spell = pending.spell
+        if pending.phase == 'precast' then
+            -- The bare slots go out again under the precast build, so a slot it leaves out
+            -- stays bare even while the strip is still in flight.
+            local built_set = {}
+            for _, slot in ipairs(TEST_STRIP) do built_set[slot] = empty end
+            local precast_set, names = test_build('precast', spell)
+            merge_into(built_set, precast_set)
+            equip(built_set)
+            test_say(spell, 'precast', names)
+            if pending.stage == 'precast' then
+                test_hold()
+            else
+                test_next(pending, 'midcast')
+            end
+        else
+            local midcast_set, names = test_build('midcast', spell)
+            equip(midcast_set)
+            test_say(spell, 'midcast', names)
+            test_hold()
+        end
+        return true
+    end
+
+    -- Registered raw by the root, since GearSwap would hold a wrapped handler back while the
+    -- job file is off, which is the only time this has anything to do. GearSwap's handler
+    -- runs first. A 'gs c test' it dropped for the hold is sent again with the hold
+    -- released, and a bare '//gs enable' or '//gs disable' ends the hold where it stands,
+    -- leaving the file as the player set it.
+    local function test_hold_watch(first, second, ...)
+        if test_fresh then
+            test_fresh = false
+            return
+        end
+        if not test_holding or type(first) ~= 'string' then return end
+        local verb = first:lower()
+        if (verb == 'enable' or verb == 'disable') and second == nil then
+            test_holding = false
+            test_token = test_token + 1
+        elseif verb == 'c' and type(second) == 'string' and second:lower() == 'test'
+            and gearswap.gearswap_disabled then
+            test_release()
+            windower.send_command('gs c ' .. table.concat({ second, ... }, ' '))
+        end
+    end
+
+    -- The unload's half: switch the file back on if a test switched it off, so the hold
+    -- cannot outlive the file that took it.
+    local function test_hold_clear()
+        test_pending = nil
+        test_release()
+    end
+
     -- The dispatcher -----------------------------------------------------------------------------
 
     -- Resolve a command to its handler and run it. The whole string is tried first, then the
@@ -1618,6 +1936,8 @@ return function(E)
     E.keyspec_parse = keyspec_parse
     E.keyspec_human = keyspec_human
     E.keyspec_valid_setting = keyspec_valid_setting
+    E.test_hold_watch = test_hold_watch
+    E.test_hold_clear = test_hold_clear
 
     -- The version stamp. The root checks it against Rahvin_GS, so a stale copy of this file
     -- stops the load with an error that names it.

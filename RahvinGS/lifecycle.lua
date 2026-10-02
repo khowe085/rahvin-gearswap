@@ -35,7 +35,7 @@
 --          functions it schedules as globals when it runs, long after load. That is how it
 --          can schedule equip_set_command, which the root declares after this file.
 
--- requires: rahvings/core, rahvings/equip, rahvings/display, rahvings/commands
+-- requires: rahvings/core, rahvings/equip, rahvings/display, rahvings/commands, rahvings/export
 return function(E)
     -- The exports this file uses, bound once at construction. The shared mutable fields are
     -- never bound here. ench_active and ench_held_slot are written through E, because a
@@ -46,6 +46,8 @@ return function(E)
     local weapon_lock_drop, release_implement = E.weapon_lock_drop, E.release_implement
     local strip_clear, disable_clear, sleep_held = E.strip_clear, E.disable_clear, E.sleep_held
     local keybind_apply, keybind_release, keybind_list = E.keybind_apply, E.keybind_release, E.keybind_list
+    local test_hold_clear = E.test_hold_clear
+    local export_restore = E.export_restore
 
     ------------------------------------------------------------------------------------------------
     -- SECTION 22 - JOB LIFECYCLE
@@ -133,6 +135,10 @@ return function(E)
         -- read.
         keybind_release()
 
+        -- A gs c test hold switched the whole job file off. Its timer would outlive this
+        -- file, so the switch is put back here.
+        test_hold_clear()
+
         -- The disable hold, then the strip hold. Each forgets its slots and enables only
         -- those no lower layer still shuts. No rebuild follows the teardown, so a hold left
         -- standing would keep its slots shut past the unload.
@@ -180,6 +186,10 @@ return function(E)
         -- so the release hands the slot to whatever still claims it, or enables it.
         if clear_locked_slots() > 0 then notice('Lock modes released (unloaded).') end
         weapon_lock_drop()
+
+        -- GearSwap's own export_set, which the export component wrapped, so a file that
+        -- loads next gets GearSwap's export back.
+        export_restore()
 
         if user_file_unload then
             user_file_unload()

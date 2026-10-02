@@ -262,11 +262,18 @@ return function(E)
                 -- rebuild, so the build can drop Treasure Hunter gear once the mob is tagged. A
                 -- mob already in the table is only restamped, because the build already reads
                 -- it as tagged. A target the mob lookup cannot find, or one that is not an NPC,
-                -- only has its stamp refreshed, and only when it is already in the table.
+                -- only has its stamp refreshed, and only when it is already in the table. When
+                -- the job file declares TH_Spells, a spell off that list was cast without
+                -- Treasure Hunter gear, so it only refreshes a tag and never adds one.
                 if state.TreasureMode.value ~= 'None' and TaggingCategories:contains(data.category) then
                     local target = data.targets[1]
                     local target_mob = target and get_mob_by_id(target.id)
-                    if target_mob and target_mob.is_npc then
+                    local tags = true
+                    if data.category == 4 and TH_Spells then
+                        local cast = res.spells[data.param]
+                        tags = cast ~= nil and TH_Spells:contains(cast.english)
+                    end
+                    if tags and target_mob and target_mob.is_npc then
                         local first_tag = not th_info.tagged_mobs[target.id]
                         th_info.tagged_mobs[target.id] = os.clock()
                         if first_tag and state.TreasureMode.value ~= 'Full Time' then

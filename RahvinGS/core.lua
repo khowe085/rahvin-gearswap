@@ -181,9 +181,10 @@ return function(E)
         -- before binding it. The keys are quoted strings because hoxne is also an exported
         -- name.
         Keybinds = {
-            ['offensemode'] = 'f12', ['treasurehunter'] = 'f11', ['weaponlock'] = 'f10',
+            ['offensemode'] = 'f10', ['treasurehunter'] = '!f11', ['weaponlock'] = '!f9',
             ['weaponmode'] = 'f9', ['jobmode'] = '^f12', ['jobmode2'] = '^f11',
-            ['hoxne'] = '^f10', ['spellreceived'] = '^f9',
+            ['hoxne'] = '^f10', ['spellreceived'] = '^f9', ['autows'] = 'f11',
+            ['autobuff'] = 'f12',
         },
         -- One stamp per versioned silo, per character: the version of that silo the
         -- character last loaded, under the character's lowercased name.

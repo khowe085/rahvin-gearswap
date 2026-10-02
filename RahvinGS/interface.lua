@@ -339,7 +339,7 @@ state.OffenseMode:set('TP')
 -- failsafe delay releases them when no completion arrives.
 state.SpellReceived = M { ['description'] = "Spell-Received" }
 state.SpellReceived:options('OFF', 'ON')
-state.SpellReceived:set('ON')
+state.SpellReceived:set('OFF')
 
 -- The Hoxne Ampulla hold. ON-Locked keeps range and ammo outright, so nothing else may enter
 -- either. ON-Allow Critical holds them the same way, but stands aside for the four actions
@@ -350,16 +350,14 @@ state.Hoxne = M { ['description'] = 'Hoxne' }
 state.Hoxne:options('OFF', 'ON-Allow Critical', 'ON-Locked')
 state.Hoxne:set('OFF')
 
--- Treasure Hunter handling. Only Thief gets the SATA option, and only Thief defaults to Full
--- Time. Every other job defaults to None.
+-- Treasure Hunter handling. Only Thief gets the SATA option. Every job defaults to Tag.
 state.TreasureMode = M { ['description'] = 'Treasure Mode' }
 if player.main_job == "THF" then
     state.TreasureMode:options('None', 'Tag', 'Full Time', 'SATA')
-    state.TreasureMode:set('Full Time')
 else
     state.TreasureMode:options('None', 'Tag', 'Full Time')
-    state.TreasureMode:set('None')
 end
+state.TreasureMode:set('Tag')
 
 -- Which weapon set to wear. The option list is the job file's own, and each name needs a
 -- matching sets.Weapons entry. Two names are special. 'Locked' and 'Unlocked' name no set of
@@ -417,6 +415,20 @@ state.JobMode2:set('OFF')
 state.AutoWS = M { ['description'] = 'Auto Weaponskill' }
 state.AutoWS:options('OFF')
 state.AutoWS:set('OFF')
+
+-- The auto weaponskill buff. While ON, a weaponskill first uses one ready buff (Last Resort
+-- as DRK or /DRK, then Berserk, Warcry, Aggressor as WAR or /WAR), and is sent again 1.1
+-- seconds later. Weaponskill presses in between are dropped. Change it with gs c autowsbuff.
+state.AutoWSBuff = M { ['description'] = 'Auto WS Buff' }
+state.AutoWSBuff:options('ON', 'OFF')
+state.AutoWSBuff:set('ON')
+
+-- The auto buff. OFF, then one option per list in AutoBuff_List, in name order, or OFF and
+-- ON when it is a single list. The engine builds the options itself, so a job file never
+-- calls :options() on it. Change it with gs c autobuff.
+state.AutoBuff = M { ['description'] = 'Auto Buff' }
+state.AutoBuff:options('OFF')
+state.AutoBuff:set('OFF')
 
 -- The ranged ammunition type. The engine reads it only to find the standard round a
 -- weaponskill may finish on once its own has run out. A job file carrying more than one
@@ -480,6 +492,26 @@ Lockstyle_List = {}
 --       Almace   = { { 'Chant du Cygne', 1000 }, { 'Chant du Cygne', 'AM3' } },
 --   }
 AutoWS_List = {}
+
+-- The auto buff lists, keyed by name. Each name becomes a state.AutoBuff option, and while
+-- it is chosen the engine keeps that list's buffs on you, casting or using the first one
+-- missing, in list order, on <me>. Each entry is a table:
+--   Name  the spell or job ability, as the game spells it. Required.
+--   Buff  the buff it keeps up. Optional: left out, it is the status the game lists for the
+--         action, as Haste for Haste II. Give it where that is missing or wrong.
+--   When  Always (the default), Engaged, Idle, Combat or OutOfCombat.
+-- A flat list of entries, with no names, offers OFF and ON.
+--   AutoBuff_List = {
+--       Melee = {
+--           { Name = 'Haste II',    Buff = 'Haste' },
+--           { Name = 'Temper II',   Buff = 'Multi Strikes', When = 'Engaged' },
+--       },
+--       Mage  = {
+--           { Name = 'Refresh III', Buff = 'Refresh' },
+--           { Name = 'Stoneskin',   When = 'Idle' },
+--       },
+--   }
+AutoBuff_List = {}
 
 -- Layer the weapon set named by the current JobMode value onto a set the caller is building,
 -- and return the result. A helper for job files: nothing in the engine calls it, and some

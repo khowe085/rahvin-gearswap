@@ -27,6 +27,10 @@ Lockstyle_List = {1,2,6,12}
 -- The offense mode the file starts in.
 state.OffenseMode:set('DT')
 
+-- The spells that wear sets.TreasureHunter against an untagged monster. A spell off this list keeps its own
+-- midcast set and does not count as tagging. Delete the line to let every spell tag.
+TH_Spells = S { 'Glutinous Dart' }
+
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.
 jobsetup (LockStylePallet,MacroBook,MacroSet)
 

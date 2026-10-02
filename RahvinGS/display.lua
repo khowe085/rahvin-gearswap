@@ -280,6 +280,11 @@ return function(E)
             autows_sync()
             fields[#fields + 1] = { label = 'AWS', mode = 'AutoWS' }
         end
+        -- The auto buff, once the job file lists any.
+        if type(AutoBuff_List) == 'table' and next(AutoBuff_List) ~= nil then
+            autobuff_sync()
+            fields[#fields + 1] = { label = 'ABF', mode = 'AutoBuff' }
+        end
 
         -- Measured in columns, not bytes. A job file's own UI_Short is used as given, and a
         -- label carrying a multi-byte glyph occupies fewer columns than bytes.

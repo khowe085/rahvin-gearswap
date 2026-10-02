@@ -25,6 +25,10 @@ Food = "Tropical Crepe"
 state.OffenseMode:options('TP', 'ACC', 'DT', 'PDL', 'SB', 'MEVA', 'CRIT', 'Enspell')
 state.OffenseMode:set('DT')
 
+-- The spells that wear sets.TreasureHunter against an untagged monster. A spell off this list keeps its own
+-- midcast set and does not count as tagging. Delete the line to let every spell tag.
+TH_Spells = S { 'Dia', 'Dia II', 'Dia III', 'Stonega' }
+
 -- Apply the macro book, macro set and lockstyle, bind the mode keys, and print the key list.
 jobsetup(LockStylePallet, MacroBook, MacroSet)
 
