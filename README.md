@@ -910,7 +910,7 @@ The Warp Ring is dropped and the Trizek Ring takes its place. Two things are wor
 //gs c test Savage Blade
 ```
 
-`//gs t` is short for `//gs c test`, so `//gs t precast Gravity` works too. GearSwap doesn't know the word `t` and prints its own line first; the test still runs.
+`//gs t` is short for `//gs c test`, so `//gs t precast Gravity` works too.
 
 - **`gs c test set <set>`** strips all sixteen slots and wears the set, so a slot the set leaves out shows up empty. The path is read as `//gs equip` reads one, with or without the leading `sets.`.
 - **`gs c test [precast|midcast] <action>`** first strips every slot but main, sub and range in a swap of its own. It then runs the engine's and your job file's precast for the named spell, ability or weaponskill, and then its midcast, each in its own swap, as for a real use. `precast` stops before midcast; `midcast`, or no word at all, runs both. Your Idle set, which a real action wears under every slot its own sets leave out, is left out of a test, so a slot the action's sets do not fill stays bare. The action is aimed at your target, or at you with none, and nothing is used: no can't-act checks, busy window, Hoxne window or multibox announce apply, and the holds and the weapon lock keep their slots as they always do.
@@ -1120,7 +1120,7 @@ Disable: //gs enable freed main, but the weapon lock holds it and takes it back.
 
 A bare `//gs disable` or `//gs enable`, which switches your whole job file off or on, is left alone.
 
-`//gs d` is short for `//gs disable`, so `//gs d head ear1` holds those slots. GearSwap doesn't know the word `d` and prints its own line first. A bare `//gs d` switches the whole job file off, as a bare `//gs disable` does.
+`//gs d` is short for `//gs c disable`, so `//gs d head ear1` holds those slots. A bare `//gs d` prints the usage line, as a bare `//gs c disable` does; it does not switch the job file off.
 
 `//gs e` is short for GearSwap's own `//gs equip`, as in `//gs e naked`. It is GearSwap's command, not the engine's, so it does not check the holds: the weapon lock keeps main because main is disabled, but sub is not, so `//gs e naked` takes sub off. Use `//gs c naked` or `//gs c weaponsonly` when that matters.
 

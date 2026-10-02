@@ -1873,6 +1873,11 @@ return function(E)
             and gearswap.gearswap_disabled then
             test_release()
             windower.send_command('gs c ' .. table.concat({ second, ... }, ' '))
+        elseif verb == 't' and gearswap.gearswap_disabled then
+            -- The short word, which GearSwap does not hand to short_word while the file is
+            -- off. It is sent on as the gs c form with the hold released.
+            test_release()
+            windower.send_command('gs c test ' .. table.concat({ second, ... }, ' '))
         end
     end
 
@@ -1926,24 +1931,30 @@ return function(E)
         if slots then windower.send_command('gs c ' .. verb .. ' ' .. slots) end
     end
 
-    -- Short words typed after '//gs', each sent on as the longer command: 'gs d' as GearSwap's
-    -- own 'gs disable', which native_disable_notice then brings into the disable hold, 'gs e'
-    -- as GearSwap's own 'gs equip', and 'gs t' as 'gs c test'. GearSwap knows none of the
-    -- three words and answers each first. Registered
-    -- raw by the root, so 'gs t' still works while a test hold has the job file off; the
-    -- 'gs c test' it sends is then the one test_hold_watch releases the hold for. The rest
-    -- of the line goes along as typed, and a bare word sends the bare command.
-    local SHORT_WORDS = { d = 'gs disable', e = 'gs equip', t = 'gs c test' }
+    -- Short words typed after '//gs', registered with GearSwap's register_unhandled_command,
+    -- so GearSwap hands over the words it does not know and, given true back, prints no
+    -- "command not found". 'gs d' runs gs c disable and 'gs t' runs gs c test, through the
+    -- dispatcher, so each is the gs c command itself. 'gs e' sends GearSwap's own 'gs
+    -- equip'. The rest of the line goes along as typed. GearSwap calls this inside a wrapped
+    -- event, so an equip it makes goes out, and only while the job file is on; a 'gs t'
+    -- typed during a test hold is test_hold_watch's.
+    local SHORT_WORDS = { d = 'disable', t = 'test' }
     local function short_word(first, ...)
         if type(first) ~= 'string' then return end
-        local target = SHORT_WORDS[first:lower()]
-        if not target then return end
+        local word = first:lower()
         local rest = table.concat({ ... }, ' ')
-        windower.send_command(rest ~= '' and (target .. ' ' .. rest) or target)
+        if word == 'e' then
+            windower.send_command(rest ~= '' and ('gs equip ' .. rest) or 'gs equip')
+            return true
+        end
+        local verb = SHORT_WORDS[word]
+        if not verb then return end
+        self_command(rest ~= '' and (verb .. ' ' .. rest) or verb)
+        return true
     end
 
-    -- The exports. The root registers native_disable_notice and short_word, and lifecycle.lua binds the keys
-    -- at load and releases them at unload through the three keybind functions. The mode
+    -- The exports. The root registers native_disable_notice and short_word, and lifecycle.lua
+    -- binds the keys at load and releases them at unload through the three keybind functions. The mode
     -- table, the key registry and the keyspec grammar are exported beside them. Every command
     -- in this file is reached through self_command, which GearSwap looks up by name.
     E.native_disable_notice = native_disable_notice
