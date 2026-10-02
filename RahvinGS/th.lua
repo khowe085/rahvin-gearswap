@@ -196,8 +196,13 @@ return function(E)
     --      burst window.
     --   4. The eleven tracker, for every actor. Every job ability packet is handed to it,
     --      and a Corsair roll that lists this character carries its total there.
+    --
+    -- The guard is on type, not nil. A '//gs r' typed while the 'addon command' event is
+    -- dispatching unloads this file and loads it again inside that dispatch, and Windower
+    -- can hand the new registration a freed handler id, so the rest of the dispatch calls
+    -- this handler with the command's arguments, a string such as 'r'.
     E.th_action = function(data)
-        if data ~= nil then
+        if type(data) == 'table' then
             if data.actor_id == player.id then
                 -- Category 2: ranged attack finished.
                 if data.category == 2 then
