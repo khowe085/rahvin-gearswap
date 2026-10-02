@@ -511,11 +511,12 @@ Ten keys are bound when your job file loads, and released when it unloads. These
 The engine lists the keys in chat as your job file loads, and `//gs c keybind` lists them again:
 
 ```
-Keys: [F10] Stance  [F9] Weapon Mode  [Alt+F9] Weapon Lock  [Alt+F11] TH Mode  [F11] Auto WS
-Keys: [Ctrl+F10] Hoxne Ampulla  [Ctrl+F9] Spell Received (Multibox)  [F12] Auto Buff
+Keys: [F9] Weapon Mode  [F10] Stance  [F11] Auto WS  [F12] Auto Buff
+Keys: [Alt+F9] Weapon Lock  [Alt+F11] TH Mode
+Keys: [Ctrl+F9] Spell Received (Multibox)  [Ctrl+F10] Hoxne Ampulla
 ```
 
-In that list OffenseMode is called *Stance*, the name the status box shortens to `STN`. When your file names its job modes with `UI_Name` or `UI_Name2`, their keys lead the second line, under the names you gave them.
+In that list OffenseMode is called *Stance*, the name the status box shortens to `STN`. The list runs in key order, one line per modifier: plain keys, then Alt, then Ctrl. When your file names its job modes with `UI_Name` or `UI_Name2`, their keys join the Ctrl line under the names you gave them.
 
 Each key sends a command you can also type or put in a macro — <kbd>F10</kbd> sends `gs c OffenseMode`, for example. The commands are under [Mode commands](#mode-commands).
 

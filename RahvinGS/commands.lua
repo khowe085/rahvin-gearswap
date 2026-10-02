@@ -173,9 +173,10 @@ return function(E)
 
     -- The keybinds --------------------------------------------------------------------------------
 
-    -- The ten key-bound modes in key-list order. Each row holds the command word, which is
-    -- also the key under settings.Keybinds, the label chat prints, the line of the key list
-    -- the row sits on, the shipped default in Windower's spelling, and the command the key
+    -- The ten key-bound modes. Their order settles a key clash, the earlier row keeping the
+    -- key; the load-time key list sorts by key instead. Each row holds the command word, which
+    -- is also the key under settings.Keybinds, the label chat prints, the line of gs c help's
+    -- mode list the row sits on, the shipped default in Windower's spelling, and the command the key
     -- sends. The two job-mode rows also name, as ui, the job-file global that carries their
     -- label. That name is read at print time, and the label here stands in when it is empty.
     -- The sent command is mixed case, and the dispatcher lowercases it.
@@ -188,10 +189,8 @@ return function(E)
         { word = 'jobmode2',       label = 'Job Mode 2', ui = 'UI_Name2', line = 2, default = '^f11', command = 'gs c JobMode2' },
         { word = 'hoxne',          label = 'Hoxne Ampulla',             line = 2, default = '^f10', command = 'gs c Hoxne' },
         { word = 'spellreceived',  label = 'Spell Received (Multibox)', line = 2, default = '^f9',  command = 'gs c SpellReceived' },
-        -- Last in the table, so on a clash an engine mode above keeps its key. Listed on line 1
-        -- beside the other F-key modes.
+        -- Last in the table, so on a clash an engine mode above keeps its key.
         { word = 'autows',         label = 'Auto WS',                   line = 1, default = 'f11',  command = 'gs c AutoWS' },
-        -- On line 2, because line 1 would pass the 100 characters the game prints unwrapped.
         { word = 'autobuff',       label = 'Auto Buff',                 line = 2, default = 'f12',  command = 'gs c AutoBuff' },
     }
 
@@ -324,38 +323,43 @@ return function(E)
         end
     end
 
-    -- Print the key list on notice, from the registry. Each row prints as [<key>] <label>,
-    -- with [none] for a row holding no key. The line-1 rows share one Keys: line and the
-    -- line-2 rows the next, and a job-mode row appears only when the job file named it. A
-    -- second line longer than 100 characters splits, with the job-mode rows on a line of
-    -- their own before the rest. The game wraps a longer line, and the wrapped tail loses
-    -- the channel color.
+    -- Print the key list on notice, from the registry, in F-key order. Each row prints as
+    -- [<key>] <label>, with [none] for a row holding no key, and a job-mode row appears only
+    -- when the job file named it. The keys go one line per modifier, plain keys first, then
+    -- Alt, Ctrl and Shift, with the rows holding no key last, and F1 to F12 within a line.
+    -- A line longer than 100 characters splits before the entry that would pass it. The game
+    -- wraps a longer line, and the wrapped tail loses the channel color.
+    local KEYLIST_GROUP = { [''] = 1, ['!'] = 2, ['^'] = 3, ['~'] = 4 }
     local function keybind_list()
-        local function entry(row)
-            return ('[%s] %s'):format(keyspec_human(bound[row.word] or ''), keybind_label(row))
-        end
-        local first, jobs, rest = {}, {}, {}
-        for _, row in ipairs(keybind_modes) do
-            if row.line == 1 then
-                first[#first + 1] = entry(row)
-            elseif row.ui then
-                local name = keybind_ui_name(row)
-                if name and name ~= '' then jobs[#jobs + 1] = entry(row) end
-            else
-                rest[#rest + 1] = entry(row)
+        local entries = {}
+        for i, row in ipairs(keybind_modes) do
+            local name = keybind_ui_name(row)
+            if not row.ui or (name and name ~= '') then
+                local spec = bound[row.word] or ''
+                local prefix, key = spec:match('^([%^!~]?)f(%d+)$')
+                entries[#entries + 1] = {
+                    group = prefix and KEYLIST_GROUP[prefix] or 5,
+                    key = tonumber(key) or 0,
+                    index = i,
+                    text = ('[%s] %s'):format(keyspec_human(spec), keybind_label(row)),
+                }
             end
         end
-        notice('Keys: ' .. table.concat(first, '  '))
-        local second = {}
-        for i = 1, #jobs do second[#second + 1] = jobs[i] end
-        for i = 1, #rest do second[#second + 1] = rest[i] end
-        local line = 'Keys: ' .. table.concat(second, '  ')
-        if #line > 100 then
-            notice('Keys: ' .. table.concat(jobs, '  '))
-            notice('Keys: ' .. table.concat(rest, '  '))
-        else
-            notice(line)
+        table.sort(entries, function(a, b)
+            if a.group ~= b.group then return a.group < b.group end
+            if a.key ~= b.key then return a.key < b.key end
+            return a.index < b.index
+        end)
+        local line, group = nil, nil
+        for _, e in ipairs(entries) do
+            if line and (e.group ~= group or #line + 2 + #e.text > 100) then
+                notice(line)
+                line = nil
+            end
+            line = line and (line .. '  ' .. e.text) or ('Keys: ' .. e.text)
+            group = e.group
         end
+        if line then notice(line) end
     end
 
     -- The argument table ------------------------------------------------------------------------
