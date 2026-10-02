@@ -27,7 +27,8 @@
 --     The argument table .. which commands take an argument, and so match on their first word
 --     The handlers ........ one per command, keyed by the exact command each answers
 --     The dispatcher ...... self_command, and the fall-through into the job file
---     Native words ........ the advisory line for GearSwap's own //gs disable and //gs enable
+--     Native words ........ the sync of GearSwap's own //gs disable and //gs enable into
+--                           the disable hold
 --
 -- The commands serve three audiences:
 --     Typed by the player ... most of them: toggles, diagnostics and item shortcuts
@@ -87,7 +88,7 @@ return function(E)
     local scan_capacity_capes, use_gated_ja = E.scan_capacity_capes, E.use_gated_ja
     local resolve_weapon_lock, strip_sweep = E.resolve_weapon_lock, E.strip_sweep
     local bridge_weapon_lock, slot_claim, strip_mode = E.bridge_weapon_lock, E.slot_claim, E.strip_mode
-    local disable_mode = E.disable_mode
+    local disable_mode, disable_native = E.disable_mode, E.disable_native
     local report_refused = E.report_refused
     local display_styles, set_display_style = E.display_styles, E.set_display_style
     local display_visible, min_value_cells = E.display_visible, E.min_value_cells
@@ -1907,24 +1908,22 @@ return function(E)
     -- The native console words -------------------------------------------------------------------
 
     -- GearSwap's own '//gs disable <slot>' and '//gs enable <slot>' act on a slot at the
-    -- addon's level, where the engine cannot see it. No claim is registered, no refusal
-    -- names it, the status box shows nothing, and the next unlock re-enables the slot. This
-    -- answers with one line pointing at the words that are tracked. It runs after GearSwap's
-    -- own handler, so the native command has already acted, and the line only advises.
-    -- Nothing here refuses, re-takes or equips.
+    -- addon's level, where the engine cannot see it. This runs after GearSwap's own handler,
+    -- so the native command has already acted, and it brings the disable hold into line by
+    -- sending the matching gs c disable or gs c enable, which records the hold, shows it on
+    -- the status box and dresses what it frees. disable_native picks the slots, and names any
+    -- freed slot another layer still holds. Nothing else here refuses or re-takes a slot.
     --
     -- A second word must follow. Bare '//gs disable' and '//gs enable' switch the whole user
-    -- file off and on rather than a slot, and there is no 'gs c' word to point those to. The
-    -- verb 'c' is the engine's own surface and answers for itself, which also keeps the
-    -- rebuild the engine sends itself silent.
-    local function native_disable_notice(first, second)
+    -- file off and on rather than a slot, and are left alone. The verb 'c' is the engine's
+    -- own surface and answers for itself, which also keeps the rebuild the engine sends
+    -- itself silent.
+    local function native_disable_notice(first, second, ...)
         if second == nil or type(first) ~= 'string' then return end
         local verb = first:lower()
-        if verb == 'disable' then
-            notice('Disable: //gs disable leaves the slot untracked -- use //gs c disable <slot>... instead.')
-        elseif verb == 'enable' then
-            notice('Disable: //gs enable is not tracked -- use //gs c enable <slot>..., or //gs c enableall for every slot.')
-        end
+        if verb ~= 'disable' and verb ~= 'enable' then return end
+        local slots = disable_native(verb, { second, ... })
+        if slots then windower.send_command('gs c ' .. verb .. ' ' .. slots) end
     end
 
     -- The exports. The root registers native_disable_notice, and lifecycle.lua binds the keys

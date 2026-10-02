@@ -1117,13 +1117,15 @@ Usage: //gs c disable <slot>... | all
 
 Accepted slot words are the sixteen slot names plus the spellings people actually type: `main sub range ranged ammo head body hands legs feet neck waist back ear1 ear2 lear rear learring rearring left_ear right_ear ring1 ring2 lring rring left_ring right_ring`, plus `all`.
 
-GearSwap's own `//gs disable` and `//gs enable` are not tracked by this engine. Using one with a slot name gets a single line pointing at the tracked form:
+GearSwap's own `//gs disable <slot>` and `//gs enable <slot>` work the same as the `gs c` forms. GearSwap acts on the slot first, then the engine records the change in the disable hold, so the status box shows it and `//gs enable` dresses the freed slot. `all` works with either.
+
+If `//gs enable` frees a slot that another hold still has (the weapon lock, the Hoxne hold, an item lock and so on), that hold takes the slot back at its next chance, and the engine says so:
 
 ```
-Disable: //gs disable leaves the slot untracked -- use //gs c disable <slot>... instead.
+Disable: //gs enable freed main, but the weapon lock holds it and takes it back.
 ```
 
-(A bare `//gs disable`, which switches your whole job file off, is left alone.)
+A bare `//gs disable` or `//gs enable`, which switches your whole job file off or on, is left alone.
 
 ### The weapon lock
 

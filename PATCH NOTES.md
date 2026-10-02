@@ -79,6 +79,10 @@ Rahvin**; 2.0 above follows 1.7.3 directly.
   Lock, Alt+F11 Treasure Hunter. F9 Weapon Mode and the Ctrl keys are unchanged. A
   settings file keeps the keys it already holds, and a clash leaves the later mode
   without a key; `gs c keybind default` moves every mode to the new defaults.
+- **`//gs disable <slot>` and `//gs enable <slot>` are tracked.** GearSwap's own forms now
+  update the disable hold the same way `gs c disable` and `gs c enable` do, so you can use
+  either. A slot `//gs enable` frees that another hold still has is named, and that hold
+  takes it back.
 - **The load-time key list is in key order.** One line per modifier (plain, Alt, Ctrl,
   Shift), F1 to F12 within a line, following the keys actually bound.
 - **`//gs export all` groups by bag.** GearSwap's own `all` export writes every item into
