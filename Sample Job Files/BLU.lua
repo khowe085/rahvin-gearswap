@@ -89,6 +89,7 @@ state.WeaponLock:set('Locked')
 UI_Name = 'Mode'
 
 -- Job mode. self_command_custom below loads the matching blue magic spell set and macro set when you cycle it.
+-- AoE loads {sub}_mage and Melee loads {sub}_melee. Save these in AzureSets with //aset save <name>.
 state.JobMode:options('AoE','Melee')
 state.JobMode:set('Melee')
 
@@ -585,8 +586,9 @@ end
 -------------------------------------------------------------------------------------------------------------------
 
 -- Called when the player's subjob changes.
+-- Here, it reloads the AzureSets spell set for the new subjob and the current job mode.
 function sub_job_change_custom(new, old)
-	-- A common use is switching the macro book or set.
+	load_azure_set(new)
 end
 
 -- Called before each action, after the engine's own checks. Cancel the action here with cancel_spell(). Nothing it returns is used.
@@ -634,16 +636,52 @@ function status_change_custom(new,old)
 	return equipSet
 end
 -- Called for a "gs c" command the engine does not handle itself, and for the weapon mode, job mode and job mode 2 commands, which call it before the gear rebuild. The command arrives in lowercase.
--- Here, a job mode change, by key, by gs c jobmode or by gs c jobmode AoE, loads the matching AzureSets spell set, magic for AoE and tp for Melee, and switches the macro set to match.
+-- Here, a job mode change, by key, by gs c jobmode or by gs c jobmode AoE, loads the matching AzureSets spell set and switches the macro set to match.
 -- Testing the first word keeps jobmode2 and other commands that merely contain jobmode from triggering it.
 function self_command_custom(command)
 	if command:match('^(%S+)') == 'jobmode' then
-		if state.JobMode.value == 'AoE' then
-			send_command('input //aset spellset magic;input /macro book 8;wait .1; input /macro set 2')
-		else
-			send_command('input //aset spellset tp;input /macro book 8;wait .1; input /macro set 1')
-		end
+		load_azure_set()
 	end
+end
+
+-- The AzureSets save file, read to learn which spell sets exist.
+local azure_settings_path = windower.windower_path .. 'addons/AzureSets/data/settings.xml'
+
+-- Returns a lookup of the spell set names saved in AzureSets, or nil when the file cannot be read.
+local function azure_set_names()
+	local file = io.open(azure_settings_path, 'r')
+	if not file then return nil end
+	local text = file:read('*a'):lower()
+	file:close()
+	local names = {}
+	for name in text:gmatch('<([%w_]+)%s*/?>') do names[name] = true end
+	return names
+end
+
+-- Loads the AzureSets spell set for the subjob and job mode: {sub}_mage in AoE mode, {sub}_melee in Melee mode.
+-- A missing {sub}_mage falls back to {sub}_melee, and a missing {sub}_melee falls back to nin_melee. Each miss is warned in chat.
+function load_azure_set(sub)
+	sub = (sub or player.sub_job or 'nin'):lower()
+	local candidates = {}
+	if state.JobMode.value == 'AoE' then candidates[#candidates+1] = sub .. '_mage' end
+	candidates[#candidates+1] = sub .. '_melee'
+	if sub ~= 'nin' then candidates[#candidates+1] = 'nin_melee' end
+
+	local names = azure_set_names()
+	local chosen
+	if not names then
+		warn('AzureSets settings not found at ' .. azure_settings_path .. ', loading ' .. candidates[1] .. ' unchecked')
+		chosen = candidates[1]
+	else
+		for _, name in ipairs(candidates) do
+			if names[name] then chosen = name break end
+			warn('AzureSets spell set ' .. name .. ' is missing')
+		end
+		if not chosen then return end
+	end
+
+	local macro_set = state.JobMode.value == 'AoE' and 2 or 1
+	send_command('input //aset spellset ' .. chosen .. ';input /macro book 8;wait .1; input /macro set ' .. macro_set)
 end
 
 -- Called when the job file unloads, after the engine has released its keys and held slots.
