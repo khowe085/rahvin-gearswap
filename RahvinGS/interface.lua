@@ -377,8 +377,8 @@ state.WeaponMode:set('OFF')
 --   Geomancy   (Geomancer) Locked, except for a Geomancy spell, whose set may change main
 --              and sub.
 -- The engine fixes this list per job, and a job file never redeclares it, because its own
--- :options() call would wipe the list. A job file that wants to start locked calls
--- state.WeaponLock:set('Locked') and nothing else. A value its job's list does not offer
+-- :options() call would wipe the list. Every job starts Locked. A job file that wants to
+-- start unlocked calls state.WeaponLock:set('Unlocked') and nothing else. A value its job's list does not offer
 -- raises at load. The equip component resolves the value into four flags at startup and on
 -- every change, and every build path reads those flags rather than this mode.
 state.WeaponLock = M { ['description'] = 'Weapon Lock' }
@@ -391,7 +391,7 @@ elseif player.main_job == "GEO" then
 else
     state.WeaponLock:options('Unlocked', 'Locked')
 end
-state.WeaponLock:set('Unlocked')
+state.WeaponLock:set('Locked')
 
 -- Two free-form mode slots for anything a job needs. The engine shows each value and reads
 -- JobMode in three places. Job_Mode_Check dresses sets.Weapons by it, the two jug-pet calls

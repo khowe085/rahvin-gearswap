@@ -587,7 +587,7 @@ Whether anything but the weapon mode may change main and sub. The mode says what
 | `Geomancy` | Geomancer only — `Locked`, except for a Geomancy spell, whose set's main and sub swap in for the cast |
 
 - **Command:** `//gs c weaponlock Locked` · **Default key:** <kbd>Alt</kbd>+<kbd>F9</kbd>
-- **The engine fixes this list per job and a job file never redeclares it** — a job file's own `:options()` call wipes it. To boot locked, call `state.WeaponLock:set('Locked')` and nothing else.
+- **The engine fixes this list per job and a job file never redeclares it** — a job file's own `:options()` call wipes it. Every job starts `Locked`. To boot unlocked, call `state.WeaponLock:set('Unlocked')` and nothing else.
 - `Locked+R` is refused while a Hoxne mode is on, because the Hoxne hold outranks the weapon lock on range: `Weapon Lock: [Locked+R] refused; Hoxne Ampulla holds range.` Asked for by name, the lock stays where it was; while cycling, `Locked+R` is skipped.
 - Whatever the value, a weaponskill never changes main or sub — see [Weaponskills](#weaponskills). The full behavior is under [The weapon lock](#the-weapon-lock).
 
