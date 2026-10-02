@@ -21,7 +21,7 @@ Random_Lockstyle = false
 -- The lockstyle sets Random_Lockstyle picks from.
 Lockstyle_List = {1,2,6,12}
 
--- Not read by this engine. gs org works whatever this says; see README, Utility.
+-- Not read by this engine.
 Organizer = true
 
 -- The offense modes this job cycles through, in place of the engine's default TP, ACC and DT.

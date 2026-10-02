@@ -894,19 +894,10 @@ The Warp Ring is dropped and the Trizek Ring takes its place. Two things are wor
 | `gs c version` | Print the running engine version — `Include Version is [2.1]` |
 | `gs c profile <path>` | Run a Windower script named for your job, subjob and character |
 | `gs c shutdown` | Terminate the game client |
-| `gs org` | Gather every item in your sets into inventory and wardrobes with the Organizer addon. No `c`: this is GearSwap's own Organizer library |
 | `gs c test set <set>` | Wear a set over a naked character and hold it for 30 seconds — see [Testing your sets](#testing-your-sets) |
 | `gs c test [precast\|midcast] <action>` | Wear the gear a spell, ability or weaponskill would, without using it, and hold it for 30 seconds |
 
 `//gs c profile raid` runs the Windower script `raid/WAR_SAM_Yourname`: the folder you name, then a script named for your main job, subjob and character. Name a folder of letters and digits: any other character splits the name, and the parts are joined with underscores, so `//gs c profile scripts/raid` runs `scripts_raid/WAR_SAM_Yourname`.
-
-**`gs org`** needs the Organizer addon loaded (`//lua load organizer`). It reads every set in your job file, works out which pieces are already in a wardrobe, and has Organizer get the rest from your other bags. To bring non-equipment along, such as food or tools, list them in your job file:
-
-```lua
-organizer_items = { "Sublime Sushi", "Shihei" }
-```
-
-Because it collects every set, a job file that names more items than inventory holds is refused with `Your sets table contains too many items.`
 
 ### Testing your sets
 

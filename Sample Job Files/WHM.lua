@@ -26,7 +26,7 @@ Lockstyle_List = {1,2,6,12}
 state.OffenseMode:options('TP','ACC','DT','PDT','MEVA')
 state.OffenseMode:set('DT')
 
--- Not read by this engine. gs org works whatever this says; see README, Utility.
+-- Not read by this engine.
 Organizer = false
 
 -- The weapon modes, each naming a sets.Weapons entry below, and the one to start in.
