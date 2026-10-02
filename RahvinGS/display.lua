@@ -628,6 +628,13 @@ return function(E)
     -- The commands component refuses them while the latch stands, through display_logged_out.
     local logged_out = false
 
+    -- The unload latch. The teardown raises it as the renderer steps aside, just before both
+    -- boxes are destroyed. Releases the teardown runs after that can still ask for a redraw,
+    -- and a redraw with no renderer standing enters one, which writes to the destroyed box and
+    -- raises inside the text library. Nothing lowers it, since the next load builds a new
+    -- component with its own flag. It gates drawing only, not saving.
+    local unloaded = false
+
     -- The renderer registry ------------------------------------------------------------------------
 
     -- Which renderer draws the status box. Each member of the registry binds six named
@@ -976,7 +983,7 @@ return function(E)
     local function lattice_settle(x, y)
         -- The one path to the panel that does not come through the redraw: the fit deferred
         -- a frame arrives on its own schedule, which a logout in between does not cancel.
-        if logged_out then return end
+        if logged_out or unloaded then return end
         local w, h = gs_status:extents()
         local n = last_lines
         local f = last_fit
@@ -1456,7 +1463,7 @@ return function(E)
         -- renderer shows the objects it creates according to the saved visible preference,
         -- which the logout leaves standing, so a first redraw after a logout would put them
         -- on screen before the test below was read.
-        if logged_out then return end
+        if logged_out or unloaded then return end
         if not renderer_standing then
             renderer_standing = active_renderer()
             renderer_standing.enter()
@@ -1526,6 +1533,7 @@ return function(E)
     -- status box still exists, since leaving touches the box. The slot is cleared before the
     -- call, so a second teardown reaches nothing even if the first raised partway through.
     local function display_unload()
+        unloaded = true
         if renderer_standing then
             local leaving = renderer_standing
             renderer_standing = nil
@@ -1886,6 +1894,7 @@ return function(E)
     -- widths. is_Busy is a job-file global and may hold any value. One wider than its column
     -- overruns it and leaves that line longer than the rest.
     function debug_box_update()
+        if unloaded then return end
         local map, _, map_moved = hold_state('debug')
         if not map_moved
             and debug_box_state.busy == is_Busy
