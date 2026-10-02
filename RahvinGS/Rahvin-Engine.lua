@@ -154,10 +154,6 @@ do
     -- off, and a wrapped handler would be held back for exactly as long as the hold stands.
     windower.raw_register_event('addon command', E.test_hold_watch)
 
-    -- The short words 'gs d', 'gs e' and 'gs t', as GearSwap's handler for the commands it
-    -- does not know, which also keeps its "command not found" line away.
-    register_unhandled_command(E.short_word)
-
     -- A worked example for a job file, commented out: reacting to a tell or to party chat.
     -- It registers nothing here.
     --[[

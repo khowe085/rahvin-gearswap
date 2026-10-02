@@ -56,8 +56,8 @@
 --          the gear rebuild, and then return true, so it runs once. Changing which commands
 --          reach the hook changes job-file behavior with no error anywhere. The shipped RNG
 --          file calls its ammunition routine from that hook on every command that reaches it.
--- EXPORTS  native_disable_notice, short_word and test_hold_watch, which the root
---          registers on the addon command event, test_hold_clear, which lifecycle.lua calls at unload, and
+-- EXPORTS  native_disable_notice and test_hold_watch, which the root registers on the addon
+--          command event, test_hold_clear, which lifecycle.lua calls at unload, and
 --          the keybind functions keybind_apply, keybind_release and keybind_list, which
 --          lifecycle.lua calls at load and unload. The mode table keybind_modes, the key
 --          registry keybinds_bound and the keyspec grammar are exported beside them:
@@ -1873,11 +1873,6 @@ return function(E)
             and gearswap.gearswap_disabled then
             test_release()
             windower.send_command('gs c ' .. table.concat({ second, ... }, ' '))
-        elseif verb == 't' and gearswap.gearswap_disabled then
-            -- The short word, which GearSwap does not hand to short_word while the file is
-            -- off. It is sent on as the gs c form with the hold released.
-            test_release()
-            windower.send_command('gs c test ' .. table.concat({ second, ... }, ' '))
         end
     end
 
@@ -1931,34 +1926,11 @@ return function(E)
         if slots then windower.send_command('gs c ' .. verb .. ' ' .. slots) end
     end
 
-    -- Short words typed after '//gs', registered with GearSwap's register_unhandled_command,
-    -- so GearSwap hands over the words it does not know and, given true back, prints no
-    -- "command not found". 'gs d' runs gs c disable and 'gs t' runs gs c test, through the
-    -- dispatcher, so each is the gs c command itself. 'gs e' sends GearSwap's own 'gs
-    -- equip'. The rest of the line goes along as typed. GearSwap calls this inside a wrapped
-    -- event, so an equip it makes goes out, and only while the job file is on; a 'gs t'
-    -- typed during a test hold is test_hold_watch's.
-    local SHORT_WORDS = { d = 'disable', t = 'test' }
-    local function short_word(first, ...)
-        if type(first) ~= 'string' then return end
-        local word = first:lower()
-        local rest = table.concat({ ... }, ' ')
-        if word == 'e' then
-            windower.send_command(rest ~= '' and ('gs equip ' .. rest) or 'gs equip')
-            return true
-        end
-        local verb = SHORT_WORDS[word]
-        if not verb then return end
-        self_command(rest ~= '' and (verb .. ' ' .. rest) or verb)
-        return true
-    end
-
-    -- The exports. The root registers native_disable_notice and short_word, and lifecycle.lua
-    -- binds the keys at load and releases them at unload through the three keybind functions. The mode
+    -- The exports. The root registers native_disable_notice, and lifecycle.lua binds the keys
+    -- at load and releases them at unload through the three keybind functions. The mode
     -- table, the key registry and the keyspec grammar are exported beside them. Every command
     -- in this file is reached through self_command, which GearSwap looks up by name.
     E.native_disable_notice = native_disable_notice
-    E.short_word = short_word
     E.keybind_modes = keybind_modes
     E.keybinds_bound = bound
     E.keybind_apply = keybind_apply
