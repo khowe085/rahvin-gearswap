@@ -20,7 +20,8 @@
 -- CONTENTS
 --   Section 22 - Job lifecycle. Four global functions covering the life of a job file: the
 --   setup call the job file makes itself, the startup notice about unsupported leftovers,
---   the teardown that gives every held slot back, and the subjob-change refresh.
+--   the teardown that gives every held slot back, and the subjob-change refresh. Load and
+--   subjob change both ask for the lockstyle, which waits for the client to settle.
 --
 -- EXPORTS  Nothing onto E. The teardown clears two E fields that the enchanted item engine
 --          sets, ench_active and ench_held_slot, because an item use must not outlive the
@@ -54,6 +55,52 @@ return function(E)
     -- load, the leftover notice shortly after, the subjob-change refresh, and teardown on
     -- unload.
 
+    -- The lockstyle, applied on load and again after each subjob change, because the game
+    -- turns lockstyle off on any job change, subjob included. A job change made at a moogle
+    -- loads this file while the job menu is still open, and the subjob is often changed in
+    -- that same menu seconds later. So a request waits LOCKSTYLE_SETTLE seconds, then until
+    -- the client can take the command: logged in, not zoning, and out of the menu or any
+    -- other event. Each request replaces the one before, so a job change followed by a
+    -- subjob change sends one lockstyle, after the last of them. file_unload cancels a
+    -- request still waiting, so it never fires into the next job file's load.
+    local LOCKSTYLE_SETTLE = 5
+    local LOCKSTYLE_POLL   = 1
+    local lockstyle_pallet = nil
+    local lockstyle_gen    = 0
+
+    -- Whether the client can take /lockstyleset now. Status 4 is an event: an NPC menu, the
+    -- moogle's job menu among them, or a cutscene. The player's own mob is absent while
+    -- zoning.
+    local function lockstyle_ready()
+        local info = windower.ffxi.get_info()
+        if not (info and info.logged_in) then return false end
+        local p = windower.ffxi.get_player()
+        if not p or p.status == 4 then return false end
+        return windower.ffxi.get_mob_by_target('me') ~= nil
+    end
+
+    -- Send the lockstyle once the client is ready, polling until it is. A request that a
+    -- newer one or an unload has replaced stops here. The closing gs c update auto dresses
+    -- the character once the lockstyle is applied.
+    local function lockstyle_try(gen)
+        if gen ~= lockstyle_gen then return end
+        if not lockstyle_ready() then
+            coroutine.schedule(function() lockstyle_try(gen) end, LOCKSTYLE_POLL)
+            return
+        end
+        windower.send_command('input /lockstyleset ' .. lockstyle_pallet ..
+            ';input /echo Change Complete;gs c update auto')
+    end
+
+    -- Ask for the lockstyle, replacing any request still waiting. Nothing is asked before
+    -- jobsetup has named a pallet.
+    local function lockstyle_request()
+        lockstyle_gen = lockstyle_gen + 1
+        if lockstyle_pallet == nil then return end
+        local gen = lockstyle_gen
+        coroutine.schedule(function() lockstyle_try(gen) end, LOCKSTYLE_SETTLE)
+    end
+
     -- Apply the job file's macro book, lockstyle and keybinds, and print the key list.
     -- The job file calls this itself, so anything raised here aborts the job file.
     function jobsetup(LockStylePallet, MacroBook, MacroSet)
@@ -70,14 +117,17 @@ return function(E)
         end
 
         -- One chained command, so the waits space out the game's responses. gs validate
-        -- lists any set item the character does not carry, and the closing gs c update auto
-        -- dresses the character once the lockstyle is applied.
+        -- lists any set item the character does not carry.
         windower.send_command('wait 1;input /macro book ' ..
             MacroBook ..
             ';wait 1;input /macro set ' ..
             MacroSet ..
-            ';gs validate;wait 3;input /lockstyleset ' ..
-            LockStylePallet .. ';input /echo Change Complete;gs c update auto;')
+            ';gs validate')
+
+        -- The lockstyle goes on its own path, which waits for the client to settle. The
+        -- pallet is kept so a subjob change re-applies this same one.
+        lockstyle_pallet = LockStylePallet
+        lockstyle_request()
 
         -- Bind the mode keys from settings.Keybinds. keybind_apply records what it binds,
         -- and file_unload releases that record. Every key sends a self command, so each has
@@ -115,6 +165,11 @@ return function(E)
     -- slots covers only a next file that is this engine. Enabling a slot can make GearSwap
     -- send an item it held back while the slot was disabled.
     function file_unload(file_name)
+        -- A lockstyle request still waiting is cancelled, so it never fires after this file
+        -- is gone.
+        lockstyle_pallet = nil
+        lockstyle_request()
+
         -- A box drag the settle has not saved yet is saved now. It touches no box, and
         -- nothing below depends on it.
         drag_flush()
@@ -189,8 +244,8 @@ return function(E)
     end
 
     -- Refresh everything a subjob change invalidates: the display layout, the set-name index
-    -- and the empty-set warnings, then the two weapon traits and the gear. GearSwap calls
-    -- this by name.
+    -- and the empty-set warnings, then the two weapon traits, the gear and the lockstyle,
+    -- which the game turned off. GearSwap calls this by name.
     --
     -- The three scheduled calls are staggered, and their order matters. Both trait checks
     -- must land before the rebuild, or the rebuild dresses the character from a stale flag.
@@ -204,6 +259,7 @@ return function(E)
         coroutine.schedule(dual_wield_check, 2)
         coroutine.schedule(two_hand_check, 2.1)
         coroutine.schedule(equip_set_command, 2.2)
+        lockstyle_request()
         if sub_job_change_custom then
             sub_job_change_custom(new, old)
         end
