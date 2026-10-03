@@ -1237,7 +1237,7 @@ Plain variables you set near the top of your job file.
 
 | Variable | Type | Description |
 |---|---|---|
-| `LockStylePallet` | string | In-game Equip Set number applied on load — `"8"` |
+| `LockStylePallet` | string | In-game Equip Set number applied on load and after each subjob change, once you are out of any menu or zone — `"8"` |
 | `MacroBook` | string | Macro book to switch to — `"4"` |
 | `MacroSet` | string | Macro page to switch to — `"1"` |
 | `Random_Lockstyle` | boolean | Pick a random lockstyle from the list below on each job change |
