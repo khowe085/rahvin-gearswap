@@ -102,6 +102,20 @@ return function(E)
     -- path calls it, since buff_change reads the flag and is_Busy directly.
     E.cast_proper_in_flight = function() return cast_in_flight and is_Busy end
 
+    -- Seconds left on the action's cooldown, or nil when it is ready. Ability recasts come in
+    -- seconds and spell recasts in frames.
+    local function cooldown_remaining(spell)
+        local s_type = spell.type
+        local seconds
+        if s_type == TYPE_JA or s_type == 'Waltz' or s_type == 'BloodPactWard' or s_type == 'BloodPactRage' or s_type == 'PetCommand' then
+            seconds = get_ability_recasts()[spell.recast_id]
+        elseif HasRecastTimer[s_type] then
+            local frames = get_spell_recasts()[spell.recast_id]
+            seconds = frames and frames / 60
+        end
+        if seconds and seconds > 0 then return seconds end
+    end
+
     -- Refuse an action that would fail, before GearSwap composes its packet. Where the
     -- player would otherwise see only the server's refusal, the refusal names its reason.
     -- Every refusing branch calls cancel_spell and returns. The checks that stop every
@@ -150,9 +164,10 @@ return function(E)
             end
         end
 
-        -- From here the checks are per action type. Ability recasts come in seconds and
-        -- spell recasts in frames, which is why the two branches below divide differently
-        -- before formatting the same way.
+        -- From here the checks are per action type. The cooldown refusal is not among them:
+        -- it waits for precast, after target selection, so a recharging action can be
+        -- pre-targeted. A recharging action is neither announced nor given a Hoxne window
+        -- here, so its refusal owes nothing; precast announces it if the recast clears first.
         local s_type = spell.type
         if s_type == TYPE_WS then
             if player.tp < 1000 then
@@ -164,14 +179,6 @@ return function(E)
                 return
             end
         elseif s_type == TYPE_JA or s_type == 'Waltz' or s_type == 'BloodPactWard' or s_type == 'BloodPactRage' or s_type == 'PetCommand' then
-            local recast_time = get_ability_recasts()[spell.recast_id]
-            if recast_time and recast_time > 0 then
-                local total_sec = recast_time
-                notice(spell.name ..
-                    ' [' .. math.floor(total_sec / 60) .. ':' .. string.format("%02d", total_sec % 60) .. ']')
-                cancel_spell()
-                return
-            end
             if spell.type == 'Waltz' then
                 local ja_resource = res.job_abilities[spell.id]
                 if ja_resource and ja_resource.tp_cost then
@@ -187,7 +194,7 @@ return function(E)
             -- Tell the other characters this ability is coming, so they can dress for it
             -- before it lands. Divine Seal is flagged as it is used, because the prediction
             -- covers the gap before its buff appears.
-            if state.SpellReceived.value ~= "OFF" then
+            if state.SpellReceived.value ~= "OFF" and not cooldown_remaining(spell) then
                 if spell.name == "Divine Seal" then
                     E.divine_seal_predicted = true
                     if settings.debug then debug("Divine Seal detected while tracking. Divine_Seal_Predicted = True") end
@@ -198,15 +205,6 @@ return function(E)
                 end
             end
         elseif HasRecastTimer[s_type] then
-            local recast_time = get_spell_recasts()[spell.recast_id]
-            if recast_time and recast_time > 0 then
-                local total_sec = recast_time / 60
-                notice(spell.name ..
-                    ' [' .. math.floor(total_sec / 60) .. ':' .. string.format("%02d", total_sec % 60) .. ']')
-                cancel_spell()
-                return
-            end
-
             -- The same announce for spells, plus whom it will reach. A spell spreads if it
             -- is area-of-effect by nature, or if a widening effect it answers to is up:
             -- Accession, Majesty or Divine Seal. Yagrush counts as Divine Seal when
@@ -214,7 +212,7 @@ return function(E)
             -- also read from their prediction flags, which cover the gap before the buff is
             -- readable.
             local s_info = spell_info[spell.id]
-            if s_info and spell.target.name and state.SpellReceived.value ~= "OFF" then
+            if s_info and spell.target.name and state.SpellReceived.value ~= "OFF" and not cooldown_remaining(spell) then
                 local accession_active = active_buffs[366] or active_buffs['Accession']
                 local majesty_active = active_buffs[621] or active_buffs['Majesty']
                 local divine_veil_active = active_buffs[78] or active_buffs['Divine Seal']
@@ -255,7 +253,7 @@ return function(E)
         if state.Hoxne.value == 'ON-Allow Critical' then
             local crit = critical_action_for(spell)
             if crit then
-                if _global.cancel_spell then
+                if _global.cancel_spell or cooldown_remaining(spell) then
                     log('Hoxne: window not opened; pretargetcheck canceled [', spell.english, ']')
                 else
                     hoxne_opened  = true
@@ -384,6 +382,15 @@ return function(E)
                 cancel_spell()
                 return
             end
+        end
+        -- The cooldown refusal. It sits here rather than in pretargetcheck so the player can
+        -- pre-target an action that is still recharging: precast runs after target selection.
+        local cooldown = cooldown_remaining(spell)
+        if cooldown then
+            notice(spell.name ..
+                ' [' .. math.floor(cooldown / 60) .. ':' .. string.format("%02d", cooldown % 60) .. ']')
+            cancel_spell()
+            return
         end
         -- Expire a busy window whose aftercast never arrived, so a lost completion cannot
         -- leave the engine refusing every following action. The polling engine carries the
