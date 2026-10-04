@@ -396,7 +396,7 @@ return function(E)
 
     -- Action classification -----------------------------------------------------------------------
 
-    -- Spell types that carry a recast timer. pretargetcheck reads the spell recasts only for
+    -- Spell types that carry a recast timer. cooldown_remaining reads the spell recasts only for
     -- these types, so a type absent here is never checked for cooldown.
     local HasRecastTimer                      = {
         ['WhiteMagic']   = true,

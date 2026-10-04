@@ -164,9 +164,9 @@ return function(E)
             end
         end
 
-        -- From here the checks are per action type. Ability recasts come in seconds and
-        -- spell recasts in frames, which is why the two branches below divide differently
-        -- before formatting the same way.
+        -- From here the checks are per action type. The cooldown refusal is not among them:
+        -- it waits for precast, after target selection, so a recharging action can be
+        -- pre-targeted. A cast announced here and refused there is paid by precast.
         local s_type = spell.type
         if s_type == TYPE_WS then
             if player.tp < 1000 then
@@ -178,9 +178,6 @@ return function(E)
                 return
             end
         elseif s_type == TYPE_JA or s_type == 'Waltz' or s_type == 'BloodPactWard' or s_type == 'BloodPactRage' or s_type == 'PetCommand' then
-            -- A cooldown refusal waits for precast, after target selection. Here it only
-            -- withholds the announce, which a refused cast must not send.
-            if cooldown_remaining(spell) then return end
             if spell.type == 'Waltz' then
                 local ja_resource = res.job_abilities[spell.id]
                 if ja_resource and ja_resource.tp_cost then
@@ -207,8 +204,6 @@ return function(E)
                 end
             end
         elseif HasRecastTimer[s_type] then
-            if cooldown_remaining(spell) then return end
-
             -- The same announce for spells, plus whom it will reach. A spell spreads if it
             -- is area-of-effect by nature, or if a widening effect it answers to is up:
             -- Accession, Majesty or Divine Seal. Yagrush counts as Divine Seal when
@@ -393,8 +388,9 @@ return function(E)
         if cooldown then
             notice(spell.name ..
                 ' [' .. math.floor(cooldown / 60) .. ':' .. string.format("%02d", cooldown % 60) .. ']')
+            finish_outgoing_cast()
             cancel_spell()
-            -- pretarget_custom may have opened the Hoxne window; give it the busy gate's deadline.
+            -- pretarget may have opened the Hoxne window; give it the busy gate's deadline.
             local crit = hoxne.window and critical_action_for(spell) or nil
             if crit then hoxne.expires = hoxne_resume_deadline(crit) end
             return
