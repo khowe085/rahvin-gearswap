@@ -952,10 +952,13 @@ sets.exported = {
     wardrobe3 = {
         left_ear={ name="Chev. Earring", augments={'Accuracy+6','Mag. Acc.+6',}},
     },
+    slip2 = {
+        body="Hecatomb Harness",
+    },
 }
 ```
 
-Bags with nothing to export are left out. GearSwap's options still apply: `onlyaugs`, `noaugs`, `name <set>`, `file <name>`, `mainjob`, `mainsubjob`, `overwrite`, `mini` and `c` (clipboard). Every other export, and `all` with `compact` or `bgwiki`, is GearSwap's own, and GearSwap's export comes back unchanged when the job file unloads.
+Items stored on storage slips with a porter moogle follow the bags, one table per slip (`slip1` to `slip33`). Slips record no augments, so `onlyaugs` leaves them out. Bags and slips with nothing to export are left out. GearSwap's options still apply: `onlyaugs`, `noaugs`, `name <set>`, `file <name>`, `mainjob`, `mainsubjob`, `overwrite`, `mini` and `c` (clipboard). Every other export, and `all` with `compact` or `bgwiki`, is GearSwap's own, and GearSwap's export comes back unchanged when the job file unloads.
 
 **Every action names the set it used.** With `info` on, every action gets one line, pet actions and gear worn for an incoming spell included:
 
