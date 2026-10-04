@@ -102,6 +102,20 @@ return function(E)
     -- path calls it, since buff_change reads the flag and is_Busy directly.
     E.cast_proper_in_flight = function() return cast_in_flight and is_Busy end
 
+    -- Seconds left on the action's cooldown, or nil when it is ready. Ability recasts come in
+    -- seconds and spell recasts in frames.
+    local function cooldown_remaining(spell)
+        local s_type = spell.type
+        local seconds
+        if s_type == TYPE_JA or s_type == 'Waltz' or s_type == 'BloodPactWard' or s_type == 'BloodPactRage' or s_type == 'PetCommand' then
+            seconds = get_ability_recasts()[spell.recast_id]
+        elseif HasRecastTimer[s_type] then
+            local frames = get_spell_recasts()[spell.recast_id]
+            seconds = frames and frames / 60
+        end
+        if seconds and seconds > 0 then return seconds end
+    end
+
     -- Refuse an action that would fail, before GearSwap composes its packet. Where the
     -- player would otherwise see only the server's refusal, the refusal names its reason.
     -- Every refusing branch calls cancel_spell and returns. The checks that stop every
@@ -164,14 +178,9 @@ return function(E)
                 return
             end
         elseif s_type == TYPE_JA or s_type == 'Waltz' or s_type == 'BloodPactWard' or s_type == 'BloodPactRage' or s_type == 'PetCommand' then
-            local recast_time = get_ability_recasts()[spell.recast_id]
-            if recast_time and recast_time > 0 then
-                local total_sec = recast_time
-                notice(spell.name ..
-                    ' [' .. math.floor(total_sec / 60) .. ':' .. string.format("%02d", total_sec % 60) .. ']')
-                cancel_spell()
-                return
-            end
+            -- A cooldown refusal waits for precast, after target selection. Here it only
+            -- withholds the announce, which a refused cast must not send.
+            if cooldown_remaining(spell) then return end
             if spell.type == 'Waltz' then
                 local ja_resource = res.job_abilities[spell.id]
                 if ja_resource and ja_resource.tp_cost then
@@ -198,14 +207,7 @@ return function(E)
                 end
             end
         elseif HasRecastTimer[s_type] then
-            local recast_time = get_spell_recasts()[spell.recast_id]
-            if recast_time and recast_time > 0 then
-                local total_sec = recast_time / 60
-                notice(spell.name ..
-                    ' [' .. math.floor(total_sec / 60) .. ':' .. string.format("%02d", total_sec % 60) .. ']')
-                cancel_spell()
-                return
-            end
+            if cooldown_remaining(spell) then return end
 
             -- The same announce for spells, plus whom it will reach. A spell spreads if it
             -- is area-of-effect by nature, or if a widening effect it answers to is up:
@@ -384,6 +386,18 @@ return function(E)
                 cancel_spell()
                 return
             end
+        end
+        -- The cooldown refusal. It sits here rather than in pretargetcheck so the player can
+        -- pre-target an action that is still recharging: precast runs after target selection.
+        local cooldown = cooldown_remaining(spell)
+        if cooldown then
+            notice(spell.name ..
+                ' [' .. math.floor(cooldown / 60) .. ':' .. string.format("%02d", cooldown % 60) .. ']')
+            cancel_spell()
+            -- pretarget_custom may have opened the Hoxne window; give it the busy gate's deadline.
+            local crit = hoxne.window and critical_action_for(spell) or nil
+            if crit then hoxne.expires = hoxne_resume_deadline(crit) end
+            return
         end
         -- Expire a busy window whose aftercast never arrived, so a lost completion cannot
         -- leave the engine refusing every following action. The polling engine carries the
