@@ -166,7 +166,8 @@ return function(E)
 
         -- From here the checks are per action type. The cooldown refusal is not among them:
         -- it waits for precast, after target selection, so a recharging action can be
-        -- pre-targeted. A cast announced here and refused there is paid by precast.
+        -- pre-targeted. A recharging action is neither announced nor given a Hoxne window
+        -- here, so its refusal owes nothing; precast announces it if the recast clears first.
         local s_type = spell.type
         if s_type == TYPE_WS then
             if player.tp < 1000 then
@@ -193,7 +194,7 @@ return function(E)
             -- Tell the other characters this ability is coming, so they can dress for it
             -- before it lands. Divine Seal is flagged as it is used, because the prediction
             -- covers the gap before its buff appears.
-            if state.SpellReceived.value ~= "OFF" then
+            if state.SpellReceived.value ~= "OFF" and not cooldown_remaining(spell) then
                 if spell.name == "Divine Seal" then
                     E.divine_seal_predicted = true
                     if settings.debug then debug("Divine Seal detected while tracking. Divine_Seal_Predicted = True") end
@@ -211,7 +212,7 @@ return function(E)
             -- also read from their prediction flags, which cover the gap before the buff is
             -- readable.
             local s_info = spell_info[spell.id]
-            if s_info and spell.target.name and state.SpellReceived.value ~= "OFF" then
+            if s_info and spell.target.name and state.SpellReceived.value ~= "OFF" and not cooldown_remaining(spell) then
                 local accession_active = active_buffs[366] or active_buffs['Accession']
                 local majesty_active = active_buffs[621] or active_buffs['Majesty']
                 local divine_veil_active = active_buffs[78] or active_buffs['Divine Seal']
@@ -252,7 +253,7 @@ return function(E)
         if state.Hoxne.value == 'ON-Allow Critical' then
             local crit = critical_action_for(spell)
             if crit then
-                if _global.cancel_spell then
+                if _global.cancel_spell or cooldown_remaining(spell) then
                     log('Hoxne: window not opened; pretargetcheck canceled [', spell.english, ']')
                 else
                     hoxne_opened  = true
@@ -388,11 +389,7 @@ return function(E)
         if cooldown then
             notice(spell.name ..
                 ' [' .. math.floor(cooldown / 60) .. ':' .. string.format("%02d", cooldown % 60) .. ']')
-            finish_outgoing_cast()
             cancel_spell()
-            -- pretarget may have opened the Hoxne window; give it the busy gate's deadline.
-            local crit = hoxne.window and critical_action_for(spell) or nil
-            if crit then hoxne.expires = hoxne_resume_deadline(crit) end
             return
         end
         -- Expire a busy window whose aftercast never arrived, so a lost completion cannot
