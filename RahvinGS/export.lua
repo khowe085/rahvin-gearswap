@@ -16,7 +16,9 @@
 --   GearSwap's own '//gs export all' writes every item you own into one flat sets.exported
 --   table, so the file does not say which bag an item is in. This component wraps GearSwap's
 --   export_set so that 'all' writes one table per bag instead, named as Windower names the
---   bag (inventory, safe2, wardrobe3...). A bag with nothing to export is left out.
+--   bag (inventory, safe2, wardrobe3...), then one table per storage slip (slip1...slip33)
+--   for the items stored on it with a porter moogle. A bag or slip with nothing to export is
+--   left out.
 --
 --   Every other export, and 'all' with compact or bgwiki, goes to GearSwap's own export_set
 --   untouched. The options read here mean what they mean to GearSwap: setname, filename,
@@ -109,6 +111,29 @@ return function(E)
             bag_lists[#bag_lists+1] = {name = bag_name, items = bag_items}
             total = total + #bag_items
         end
+
+        -- Then each storage slip's items, as the slips lib that porter and findAll use reads
+        -- them from the slip's extdata. g.require is Lua's own require; the job file's is
+        -- GearSwap's include. A slip holds only which items are stored, so these never carry
+        -- augments.
+        local slips = g.require('slips')
+        local slip_items = slips.get_player_items()
+        for n, slip_id in ipairs(slips.storages) do
+            local list = {}
+            for _, id in ipairs(slip_items[slip_id]) do
+                local item = res.items[id]
+                if item then
+                    local slot_id = item.slots and next(item.slots)
+                    list[#list+1] = {
+                        name = item[g.language],
+                        slot = slot_id and (res.slots[slot_id].english:gsub(' ', '_'):lower()) or 'item',
+                    }
+                end
+            end
+            bag_lists[#bag_lists+1] = {name = 'slip' .. n, items = list}
+            total = total + #list
+        end
+
         if total == 0 then
             msg.addon_msg(123, 'There is nothing to export.')
             return
